@@ -272,7 +272,14 @@ window.TRIP_CONFIG = {
             { id: 25, category: "設備", name: "雨傘", qty: "1 個", checked: false },
             { id: 26, category: "設備", name: "大人水壺", qty: "1 個", checked: false },
             { id: 27, category: "設備", name: "大人餐具", qty: "2 組", checked: false },
-            { id: 28, category: "設備", name: "露營椅", qty: "2 個", checked: false }
+            { id: 28, category: "設備", name: "露營椅", qty: "2 個", checked: false },
+             { id: 28, category: "食物", name: "泡麵", qty: "2 個", checked: false },
+             { id: 28, category: "食物", name: "飲料", qty: "2 個", checked: false },
+
+              { id: 28, category: "食物", name: "洋芋片", qty: "1 個", checked: false },
+                           { id: 28, category: "食物", name: "保久乳", qty: "1 個", checked: false },
+               { id: 28, category: "食物", name: "小餅乾", qty: "1 個", checked: false }
+        
         ],
         food: [],
         gear: []
