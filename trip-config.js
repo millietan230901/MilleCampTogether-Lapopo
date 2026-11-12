@@ -55,93 +55,146 @@ window.TRIP_CONFIG = {
         {
             label: "11/14(六)",
             title: "Day 1 (週六)",
-            references: [],
+            references: [
+                { title: "", url: "" }
+            ],
             events: [
                 { 
                     time: "09:00", 
                     title: "台北出發", 
-                    detail: "從同安街出發。出發前先用全聯小時達買好晚上的泡麵與啤酒帶上車。",
-                    imageUrl: "https://placehold.co/600x400/eeeeee/333333?text=Depart+from+Taipei"
+                    detail: "買個咖啡，開車GOGO!。",
+                    imageUrl: ""
                 },
                 { 
                     time: "10:00–11:30", 
                     title: "基隆市中正室內兒童樂園", 
                     detail: "室內涼爽放電 1.5 小時。停於中正區行政大樓地下停車場。",
                     mapUrl: "https://www.google.com/maps/search/?api=1&query=%E5%9F%BA%E9%9A%86%E5%B8%82%E4%B8%AD%E6%AD%A3%E5%AE%A4%E5%85%A7%E5%85%92%E7%AB%A5%E6%A8%82%E5%9C%92",
-                    imageUrl: "https://placehold.co/600x400/eeeeee/333333?text=Children+Amusement+Park"
+                    parking: {
+                        name: "基隆市中正區行政大樓地下停車場",
+                        mapUrl: "https://www.google.com/maps/search/?api=1&query=%E5%9F%BA%E9%9A%86%E5%B8%82%E4%B8%AD%E6%AD%A3%E5%8D%80%E8%A1%8C%E6%94%BF%E5%A4%A7%E6%A8%93%E5%9C%B0%E4%B8%8B%E5%81%9C%E8%BB%8A%E5%A0%B4"
+                    },
+                    imageUrl: "image/day1_1.jpg"
                 },
                 { 
                     time: "11:50–12:45", 
-                    title: "多利創意漢堡 (車上享用)", 
-                    detail: "七堵外帶。臨停取餐後一家人直接在車上吃，附餐避開地瓜與馬鈴薯。",
-                    mapUrl: "https://www.google.com/maps/search/?api=1&query=%E5%A4%9A%E5%88%A9%E5%89%B5%E6%84%8F%E6%BC%A2%E5%A0%A1%20%E5%9F%BA%E9%9A%86%E4%B8%83%E5%A0%B5",
-                    imageUrl: "https://placehold.co/600x400/eeeeee/333333?text=Dolly+Burger"
+                    title: "暖暖小林湯包麵食館 (午餐)", 
+                    mealType: "lunch",
+                    backupRestaurants: [
+                        { name: "金龍肉焿", mapUrl: "https://www.google.com/maps/search/?api=1&query=%E9%87%91%E9%BE%8D%E8%82%89%E7%84%84" },
+                        { name: "天一香肉焿順", mapUrl: "https://www.google.com/maps/search/?api=1&query=%E5%A4%A9%E4%B8%80%E9%A6%99%E8%82%89%E7%84%84%E9%A0%86" },
+                        { name: "多利創意漢堡", mapUrl: "https://www.google.com/maps/search/?api=1&query=%E5%A4%9A%E5%88%A9%E5%89%B5%E6%84%8F%E6%BC%A2%E5%A0%A1" }
+                    ],
+                    detail: "前往暖暖在地人氣麵食館享用午餐。如人多無位，則買至車上享用",
+                    mapUrl: "https://www.google.com/maps/search/?api=1&query=%E6%9A%96%E6%9A%96%E5%B0%8F%E6%9E%97%E6%B9%AF%E5%8C%85%E9%BA%B5%E9%A3%9F%E9%A4%A8",
+                    imageUrl: "image/day1_2.jpg"
                 },
                 { 
-                    time: "13:00–14:30", 
+                    time: "12:50–13:20", 
+                    title: "全聯福利中心 基隆暖暖店", 
+                    detail: "入營前的採買站（停留約30分鐘），補給飲料、泡麵、啤酒與零食 YA!",
+                    mapUrl: "https://maps.app.goo.gl/nJ2uNSQvrZNqGJpr8?g_st=ic",
+                    imageUrl: ""
+                },
+                { 
+                    time: "13:20–14:30", 
                     title: "車上午睡與移動", 
-                    detail: "開往拉波波村。提早抵達後停在樹蔭下維持冷氣，在汽座上一路安穩午睡。",
-                    imageUrl: "https://placehold.co/600x400/eeeeee/333333?text=Nap+Time"
+                    detail: "開往拉波波村。提早抵達後停在樹蔭下維持冷氣，午睡。",
+                    imageUrl: "image/day1_3.jpg"
                 },
                 { 
-                    time: "14:30", 
+                    time: "15:00", 
                     title: "LAPOPO 拉波波村入住", 
-                    detail: "精神飽滿進村放行李，於草皮區享用營區下午茶。",
+                    detail: "進村放行李，於草皮區享用營區下午茶、小孩們吹泡泡、踢球。",
                     mapUrl: "https://www.google.com/maps/search/?api=1&query=LAPOPO%20%E6%8B%89%E6%B3%A2%E6%B3%A2%E6%9D%91%20%E5%9F%BA%E9%9A%86",
-                    imageUrl: "https://placehold.co/600x400/eeeeee/333333?text=LAPOPO+Village"
+                    imageUrl: "image/day1_4.jpg"
                 },
                 { 
-                    time: "18:00", 
+                    time: "18:00-20:00", 
                     title: "豪華晚餐", 
-                    detail: "一帳一鍋、自助美食與辣味手抓海鮮。火鍋可煮蝦子等海鮮。",
+                    mealType: "dinner",
+                    backupRestaurants: [],
+                    detail: "一帳一鍋、自助美食與辣味手抓海鮮。",
                     mapUrl: "https://www.google.com/maps/search/?api=1&query=LAPOPO%20%E6%8B%89%E6%B3%A2%E6%B3%A2%E6%9D%91%20%E5%9F%BA%E9%9A%86",
-                    imageUrl: "https://placehold.co/600x400/eeeeee/333333?text=Camping+Dinner"
+                    imageUrl: "image/day1_5.jpg"
                 },
                 { 
-                    time: "20:00", 
-                    title: "聖誕之夜", 
-                    detail: "營區集合進行聖誕交換禮物，帶領孩子們玩螢光棒與吹泡泡。小孩睡後為大人宵夜時間。",
-                    imageUrl: "https://placehold.co/600x400/eeeeee/333333?text=Christmas+Night"
+                    time: "20:00-20:30", 
+                    title: "營火考棉花糖+聖誕之夜!", 
+                    detail: "邊吃著棉花糖，進行聖誕交換禮物，帶領孩子們玩螢光棒。",
+                    imageUrl: "image/day1_6.jpg"
+                },
+                                { 
+                    time: "20:30-22:00", 
+                    title: "大人宵夜場，喝酒時間", 
+                    detail: "小孩睡後，宵夜宵夜宵夜，喝酒喝酒喝酒，聊天聊天聊天。",
+                    imageUrl: ""
                 }
+
             ]
         },
         {
             label: "11/15(日)",
             title: "Day 2 (週日)",
-            references: [],
+            references: [
+                { title: "", url: "" }
+            ],
             events: [
                 { 
                     key: "breakfast", 
                     time: "08:00–10:00", 
                     title: "自助式早餐", 
-                    detail: "中西式多樣餐點，依當日供應為準。" 
+                    detail: "中西式多樣餐點，依當日供應為準。" ,
+                    imageUrl :"image/day2_1.jpg"
                 },
                 { 
                     time: "11:00–12:00", 
                     title: "暖東峽谷步道生態導覽", 
-                    detail: "全家換上長褲與球鞋參與營區導覽，多為石頭階梯。12:00 拔營退房。",
-                    mapUrl: "https://www.google.com/maps/search/?api=1&query=%E6%9A%96%E6%9D%B1%E5%B3%BD%E8%B0%B7%20%E5%9F%BA%E9%9A%86",
-                    imageUrl: "https://placehold.co/600x400/eeeeee/333333?text=Nuandong+Valley"
+                    detail: "11:00退房後。穿著長褲與球鞋，參與營區導覽，多為石頭階梯。",
+                   imageUrl :"image/day2_2.jpg"
                 },
                 { 
                     time: "13:00–14:30", 
-                    title: "彩虹灣餐飲 (午餐與午睡)", 
-                    detail: "望海巷石頭火鍋與咖啡。將 Joolz Aer+ 推車椅背放平讓小孩在桌邊安穩午休，大人悠哉看海景用餐。",
-                    mapUrl: "https://www.google.com/maps/search/?api=1&query=%E5%BD%A9%E8%99%B9%E7%81%A3%E9%A4%90%E9%A3%B2%20%E5%9F%BA%E9%9A%86",
-                    imageUrl: "https://placehold.co/600x400/eeeeee/333333?text=Rainbow+Bay+Restaurant"
+                    title: "望海巷石頭火鍋", 
+                    mealType: "lunch",
+                    backupRestaurants: [],
+                    detail: "望海巷石頭火鍋，看海景用餐。",
+                    mapUrl: "https://maps.app.goo.gl/9e4BGxfA2DDLeEZK7?g_st=ic",
+                    parking: {
+                        name: "八斗子車站停車場 (或望海巷漁港停車場)",
+                        mapUrl: "https://www.google.com/maps/search/?api=1&query=%E5%85%AB%E6%96%97%E5%AD%90%E8%BB%8A%E7%AB%99%E5%81%9C%E8%BB%8A%E5%A0%B4"
+                    },
+                    imageUrl :"image/day2_3.jpg"
                 },
                 { 
                     time: "15:00–17:00", 
-                    title: "潮境智能海洋館", 
-                    detail: "門票 $250/人。館內冷氣舒適且空間寬敞，適合推車移動，欣賞活體海洋生物。",
+                    title: "潮境智能海洋館(備案)(如果還有電?)", 
+                    detail: "現場用klook買票 $250/人。適合小小孩、欣賞海洋生物。",
                     mapUrl: "https://www.google.com/maps/search/?api=1&query=%E6%BD%AE%E5%A2%83%E6%99%BA%E8%83%BD%E6%B5%B7%E6%B4%8B%E9%A4%A8",
-                    imageUrl: "https://placehold.co/600x400/eeeeee/333333?text=iOcean+Aquarium"
+                    parking: {
+                        name: "潮境智能海洋館停車場",
+                        mapUrl: "https://www.google.com/maps/search/?api=1&query=%E6%BD%AE%E5%A2%83%E6%99%BA%E8%83%BD%E6%B5%B7%E6%B4%8B%E9%A4%A8%E5%81%9C%E8%BB%8A%E5%A0%B4"
+                    },
+                    imageUrl: "image/day2_4.jpg"
                 },
                 { 
-                    time: "17:00–18:30", 
+                    time: "17:15–18:00", 
+                    title: "回程美食：仁愛市場大腸圈 & 遠東泡泡冰", 
+                    detail: "驅車前往基隆市區，外帶現切大腸圈與綿密的泡泡冰，在車上當點心！",
+                    mapUrl: "https://www.google.com/maps/search/?api=1&query=%E4%BB%81%E6%84%9B%E5%B8%82%E5%A0%B4%E5%A4%A7%E8%85%B8%E5%9C%88",
+                    parking: {
+                        name: "博愛地下停車場(備案，不一定要停車)",
+                        mapUrl: "https://www.google.com/maps/search/?api=1&query=%E5%8D%9A%E6%84%9B%E5%9C%B0%E4%B8%8B%E5%81%9C%E8%BB%8A%E5%A0%B4"
+                    },
+                    backupRestaurants: [
+                        { name: "遠東泡泡冰", mapUrl: "https://www.google.com/maps/search/?api=1&query=%E9%81%A0%E6%9D%B1%E6%B3%A1%E6%B3%A1%E5%86%B0" }
+                    ],
+                    imageUrl: "image/day2_5.jpg"
+                },
+                { 
+                    time: "18:00–18:45", 
                     title: "溫暖的家", 
-                    detail: "驅車返程，預計 18:30 抵達台北同安街。",
-                    imageUrl: "https://placehold.co/600x400/eeeeee/333333?text=Sweet+Home"
+                    detail: "驅車返程，預計 18:45 抵達台北。",
                 }
             ]
         }
@@ -186,7 +239,7 @@ window.TRIP_CONFIG = {
         }
     ],
     familyAssignments: [],
-    dinnerReminder: "自備個人盥洗用品、換洗衣物與聖誕交換禮物；餐點以營區當日供應為準。",
+    dinnerReminder: "",
     menuTabTitle: "營區晚餐",
     checklists: {
         personal: [
@@ -194,14 +247,18 @@ window.TRIP_CONFIG = {
             { id: 2, category: "衛生清潔", name: "小孩牙膏", qty: "1 個", checked: false },
             { id: 3, category: "衛生清潔", name: "大人牙刷", qty: "1 個", checked: false },
             { id: 4, category: "衛生清潔", name: "大人牙膏", qty: "1 個", checked: false },
+            { id: 11, category: "衛生清潔", name: "毛巾浴巾", qty: "1 個", checked: false },
             { id: 5, category: "保養", name: "防曬乳", qty: "1 個", checked: false },
             { id: 6, category: "保養", name: "蚊蟲叮咬舒緩膏", qty: "1 個", checked: false },
             { id: 7, category: "保養", name: "乳液", qty: "1 個", checked: false },
             { id: 8, category: "保養", name: "洗面乳", qty: "1 罐", checked: false },
-            { id: 9, category: "玩樂", name: "泳衣", qty: "1 個", checked: false },
-            { id: 10, category: "玩樂", name: "浴巾", qty: "1 個", checked: false },
-            { id: 11, category: "玩樂", name: "玩沙組", qty: "1 個", checked: false },
-            { id: 12, category: "玩樂", name: "噴射火箭", qty: "1 個", checked: false },
+                        { id: 9, category: "玩樂", name: "聖誕禮物", qty: "1 個", checked: false },
+                        { id:10, category: "玩樂", name: "禮物道具毛線", qty: "1 個", checked: false },
+{ id: 12, category: "玩樂", name: "螢光棒", qty: "1 個", checked: false },
+{ id: 12, category: "玩樂", name: "球", qty: "1 個", checked: false },
+            { id: 12, category: "玩樂", name: "泡泡水", qty: "1 個", checked: false },
+        
+                        { id:10, category: "玩樂", name: "泳衣(視天氣)", qty: "1 個", checked: false },
             { id: 13, category: "衣物", name: "拖鞋", qty: "2 雙", checked: false },
             { id: 14, category: "衣物", name: "小孩衣服", qty: "4 套", checked: false },
             { id: 15, category: "衣物", name: "大人衣服", qty: "2 套", checked: false },

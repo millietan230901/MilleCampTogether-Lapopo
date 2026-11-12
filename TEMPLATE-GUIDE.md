@@ -47,14 +47,28 @@
         time: "15:00",
         title: "辦理入住",
         detail: "入住備註",
-        mapUrl: "https://www.google.com/maps/search/?api=1&query=住宿地點"
+        mapUrl: "https://www.google.com/maps/search/?api=1&query=住宿地點",
+        parking: {
+            name: "住宿停車場",
+            mapUrl: "https://www.google.com/maps/search/?api=1&query=住宿停車場"
+        },
+        mealType: "lunch",
+        backupRestaurants: [
+            { name: "", mapUrl: "" },
+            { name: "", mapUrl: "" },
+            { name: "", mapUrl: "" },
+            { name: "", mapUrl: "" },
+            { name: "", mapUrl: "" }
+        ]
     }]
 }
 ```
 
-`references` 與 `events` 都可選填 `mapUrl`，設定後會顯示「開啟 Google 導航」快捷鍵；可用 `mapLabel` 自訂按鈕文字。請在需要導航的商店、住宿、餐廳或景點項目設定此網址，未設定時不顯示按鈕。可使用 Google 地圖分享連結，或用 `https://www.google.com/maps/search/?api=1&query=地點名稱` 建立地點搜尋連結。
+`references` 與 `events` 都可選填 `mapUrl`，設定後會在行程卡右側顯示小型 Google 導航鍵；可用 `mapLabel` 自訂文字。景點可設定 `parking: { name, mapUrl, mapLabel }`，在事件說明下方顯示停車位置與專屬導航鍵。午餐/晚餐事件可加 `mealType: "lunch"` 或 `"dinner"` 及 `backupRestaurants` 陣列；備案餐廳以可收合區塊呈現，最多可填 5 間，每筆使用 `{ name, mapUrl, mapLabel }`。只有填入餐廳名稱或地圖網址的項目會顯示；全部未填時整個備案餐廳區塊隱藏。
 
-事件可用 `key: "breakfast"` 套用 `breakfast` 設定。行程圖片放在 `images.schedule`；行程中的餐廳/餐點圖片放在 `images.scheduleMeals`。
+請在需要導航的商店、住宿、餐廳、景點和停車場項目設定網址。可使用 Google 地圖分享連結，或用 `https://www.google.com/maps/search/?api=1&query=地點名稱` 建立地點搜尋連結。
+
+事件可用 `key: "breakfast"` 套用 `breakfast` 設定。若要在個別行程卡片顯示照片，可設定 `imageUrl`（可選 `imageAlt`）；圖片固定顯示為 300×150 px，並以裁切方式維持一致版面。使用相對於網頁的路徑，例如 `image/day1_3.jpg`，並將照片放入對應資料夾。不要使用 `/Images/...` 這種從網站根目錄起算且大小寫不符的路徑。整體行程圖片也可放在 `images.schedule`；行程中的餐廳/餐點圖片放在 `images.scheduleMeals`。
 
 ## 營區晚餐
 

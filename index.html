@@ -1060,15 +1060,19 @@
         function renderTripSchedule() {
             const container = document.querySelector('[data-trip-schedule-days]');
             const days = Array.isArray(tripConfig.scheduleDays) ? tripConfig.scheduleDays : [];
-            const createMapLink = (url, label = '開啟 Google 導航') => {
+            const createMapLink = (url, label = '開啟 Google 導航', variant = 'emerald') => {
                 const link = document.createElement('a');
                 link.href = url;
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
-                link.className = 'inline-flex items-center justify-center bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-2 rounded-lg text-xs transition-all shadow-sm';
+                link.className = `inline-flex shrink-0 items-center justify-center text-white font-bold px-2.5 py-1.5 rounded-lg text-xs transition-all shadow-sm ${
+                    variant === 'blue'
+                        ? 'bg-sky-700 hover:bg-sky-800'
+                        : 'bg-emerald-700 hover:bg-emerald-800'
+                }`;
                 const icon = document.createElement('i');
-                icon.className = 'fa-solid fa-diamond-turn-right mr-2';
-                link.append(icon, document.createTextNode(label));
+                icon.className = 'fa-solid fa-diamond-turn-right mr-1.5';
+                link.append(icon, document.createTextNode(label || '開啟 Google 導航'));
                 return link;
             };
             container.replaceChildren();
@@ -1084,16 +1088,18 @@
                 heading.append(badge, document.createTextNode(`${day.label || ''} ${day.title || ''}`));
                 card.appendChild(heading);
 
-                if (day.references?.length) {
+                const referencesList = (Array.isArray(day.references) ? day.references : [])
+                    .filter(reference => reference.title?.trim() || reference.url?.trim() || reference.mapUrl?.trim());
+                if (referencesList.length > 0) {
                     const references = document.createElement('div');
                     references.className = 'bg-stone-50 rounded-xl border border-stone-200 p-4 mb-5';
                     const referencesTitle = document.createElement('h4');
                     referencesTitle.className = 'font-bold text-stone-800 mb-2';
                     referencesTitle.textContent = tripConfig.scheduleReferencesTitle || '行程參考資訊';
                     references.appendChild(referencesTitle);
-                    day.references.forEach(reference => {
+                    referencesList.forEach(reference => {
                         const row = document.createElement('div');
-                        row.className = 'flex flex-wrap items-center gap-2 py-1.5 text-sm';
+                        row.className = 'flex flex-wrap items-center justify-between gap-2 py-1.5 text-sm';
                         const label = document.createElement('span');
                         label.className = 'font-medium';
                         label.textContent = reference.title;
@@ -1128,23 +1134,88 @@
                     marker.textContent = (event.time || '').match(/\d{1,2}/)?.[0] || `${eventIndex + 1}`;
 
                     const body = document.createElement('div');
-                    body.className = 'bg-stone-50 p-4 rounded-xl border border-stone-200';
+                    body.className = 'bg-stone-50 p-4 rounded-xl border border-stone-200 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3';
+                    const details = document.createElement('div');
+                    details.className = 'min-w-0 flex-1';
                     const time = document.createElement('span');
                     time.className = 'text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded';
                     time.textContent = event.time || '';
                     const title = document.createElement('h4');
                     title.className = 'font-bold text-base text-stone-800 mt-1';
                     title.textContent = event.title || '';
-                    body.append(time, title);
+                    details.append(time, title);
                     if (event.detail) {
                         const detail = document.createElement('p');
                         detail.className = 'text-xs sm:text-sm text-stone-600 mt-1';
                         detail.textContent = event.detail;
-                        body.appendChild(detail);
+                        details.appendChild(detail);
                     }
+                    if (event.imageUrl) {
+                        const image = document.createElement('img');
+                        image.src = event.imageUrl;
+                        image.alt = event.imageAlt || event.title || '行程照片';
+                        image.loading = 'lazy';
+                        image.width = 300;
+                        image.height = 150;
+                        image.className = 'mt-3 block h-[150px] w-[300px] max-w-full rounded-xl border border-stone-200 object-cover';
+                        image.addEventListener('error', () => image.remove(), { once: true });
+                        details.appendChild(image);
+                    }
+
+                    const actions = document.createElement('div');
+                    actions.className = 'flex shrink-0 flex-col items-end gap-2';
                     if (event.mapUrl) {
-                        body.appendChild(createMapLink(event.mapUrl, event.mapLabel));
+                        actions.appendChild(createMapLink(event.mapUrl, event.mapLabel));
                     }
+                    body.appendChild(details);
+
+                    if (event.parking) {
+                        const parking = document.createElement('div');
+                        parking.className = 'mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2';
+                        const parkingLabel = document.createElement('span');
+                        parkingLabel.className = 'text-xs font-medium text-sky-900';
+                        parkingLabel.textContent = `停車場位置：${event.parking.name || '待補'}`;
+                        parking.appendChild(parkingLabel);
+                        if (event.parking.mapUrl) {
+                            parking.appendChild(createMapLink(event.parking.mapUrl, event.parking.mapLabel || '停車場導航', 'blue'));
+                        }
+                        details.appendChild(parking);
+                    }
+
+                    const backupRestaurants = (Array.isArray(event.backupRestaurants) ? event.backupRestaurants : [])
+                        .filter(restaurant => restaurant.name?.trim() || restaurant.mapUrl?.trim())
+                        .slice(0, 5);
+                    if (backupRestaurants.length > 0) {
+                        const alternatives = document.createElement('details');
+                        alternatives.className = 'mt-3 rounded-lg border border-amber-200 bg-amber-50/70 p-3';
+                        const summary = document.createElement('summary');
+                        summary.className = 'flex cursor-pointer list-none items-center justify-between gap-2 text-xs font-bold text-amber-900';
+                        const summaryTitle = document.createElement('span');
+                        summaryTitle.textContent = '備案餐廳';
+                        const summaryHint = document.createElement('span');
+                        summaryHint.className = 'font-normal text-amber-800';
+                        summaryHint.textContent = `${backupRestaurants.length} 間　展開 / 收合`;
+                        summary.append(summaryTitle, summaryHint);
+                        alternatives.appendChild(summary);
+
+                        const restaurantList = document.createElement('div');
+                        restaurantList.className = 'mt-2 space-y-2 border-t border-amber-200 pt-2';
+                        backupRestaurants.forEach(restaurant => {
+                            const restaurantRow = document.createElement('div');
+                            restaurantRow.className = 'flex flex-wrap items-center justify-between gap-2 rounded-md bg-white/70 px-3 py-2 text-xs text-amber-950';
+                            const restaurantName = document.createElement('span');
+                            restaurantName.className = 'font-medium';
+                            restaurantName.textContent = restaurant.name || '備案餐廳';
+                            restaurantRow.appendChild(restaurantName);
+                            if (restaurant.mapUrl) {
+                                restaurantRow.appendChild(createMapLink(restaurant.mapUrl, restaurant.mapLabel || '導航'));
+                            }
+                            restaurantList.appendChild(restaurantRow);
+                        });
+                        alternatives.appendChild(restaurantList);
+                        details.appendChild(alternatives);
+                    }
+                    if (actions.childElementCount) body.appendChild(actions);
                     row.append(marker, body);
                     timeline.appendChild(row);
                 });
