@@ -11,7 +11,7 @@ window.TRIP_CONFIG = {
     participants: "13 大 8 小 (阿皮/核桃/暮晨/布丁/百萬/阿棣)",
     families: ["阿皮", "核桃", "暮晨", "布丁", "百萬", "阿棣"],
     checkInName: "黃莉凌",
-    checkInInfo: "13:00 起開放免費停車與寄放行李，15:00 起帳篷入住",
+    checkInInfo: "座落在群山環繞的美好之處！帳篷打開就是峽谷，最貼近自然環境的野營體驗",
     mapUrl: "https://maps.app.goo.gl/gQnWaR3B2Kk5dK6h9",
     mapImage: "image/lapopo-map.jpg",
     mapTitle: "園區地圖 & 帳篷位置指引",
@@ -19,10 +19,11 @@ window.TRIP_CONFIG = {
     mapDescription: "13:00 起開放免費停車與寄放行李。入園後請依現場服務人員引導，前往我們專屬的神殿帳區域。兒童活動需由家長全程陪同。",
     venueHighlightsTitle: "園區設施與服務",
     venueHighlights: [
-        { icon: "fa-square-parking", title: "免費停車", detail: "13:00 起開放" },
-        { icon: "fa-suitcase", title: "行李寄放", detail: "13:00 起免費寄放" },
-        { icon: "fa-tent", title: "帳篷入住", detail: "15:00 起" },
+        { icon: "fa-square-parking", title: "入園停車", detail: "13:00" },
+        { icon: "fa-tent", title: "帳篷入住", detail: "15:00" },
+        { icon: "fa-utensils", title: "火鍋晚餐", detail: "18:00-20:00" },
         { key: "breakfast", icon: "fa-utensils", title: "自助式早餐" }
+
     ],
     breakfast: {
         time: "08:00–10:00",
@@ -50,7 +51,6 @@ window.TRIP_CONFIG = {
         "兒童活動需由家長全程陪同。"
     ],
     rulesImagesTitle: "查看營區規定圖片",
-    scheduleTitle: "行程安排",
     scheduleDays: [
         {
             label: "11/14(六)",
@@ -161,8 +161,8 @@ window.TRIP_CONFIG = {
                     detail: "望海巷石頭火鍋，看海景用餐。",
                     mapUrl: "https://maps.app.goo.gl/9e4BGxfA2DDLeEZK7?g_st=ic",
                     parking: {
-                        name: "八斗子車站停車場 (或望海巷漁港停車場)",
-                        mapUrl: "https://www.google.com/maps/search/?api=1&query=%E5%85%AB%E6%96%97%E5%AD%90%E8%BB%8A%E7%AB%99%E5%81%9C%E8%BB%8A%E5%A0%B4"
+                        name: "日月亭基隆和一停車場 uTagGo(先放人下車，再過去停完車後，過橋走回餐廳",
+                        mapUrl: "https://maps.app.goo.gl/oqt6J6qdCsPQ6vUb94"
                     },
                     imageUrl :"image/day2_3.jpg"
                 },
@@ -324,7 +324,7 @@ window.TRIP_CONFIG = {
         "梳子、牙刷、牙膏等個人用品"
     ],
     images: {
-        hero: null,
+        hero:  "image/main.png",
         overview: [
             { src: "image/trip.png", alt: "基隆拉波波村行程與住宿資訊總覽", caption: "行程、餐食與住宿資訊總覽" }
         ],

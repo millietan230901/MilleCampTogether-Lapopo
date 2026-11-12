@@ -287,13 +287,17 @@
 
         <!-- TAB 2: 行程安排 (SCHEDULE) -->
         <section id="sec-schedule" class="hidden space-y-6">
-            <h2 data-trip-schedule-title class="text-xl font-black text-forest"></h2>
             <div data-trip-image-gallery="schedule" class="bg-white rounded-2xl p-5 border border-stone-200 shadow-sm">
                 <h3 class="font-bold text-lg text-forest mb-3">行程參考圖片</h3>
                 <div data-trip-image-list class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
             <div data-trip-schedule-days class="space-y-6"></div>
         </section>
+
+        <button id="back-to-top" type="button" aria-label="返回最上方" title="返回最上方"
+            class="fixed bottom-5 right-5 z-50 hidden h-12 w-12 items-center justify-center rounded-full bg-forest text-white shadow-lg transition hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-300">
+            <i class="fa-solid fa-arrow-up"></i>
+        </button>
 
         <!-- TAB 3: 營區晚餐 -->
         <section id="sec-menu" class="hidden space-y-6">
@@ -305,23 +309,23 @@
                     <p data-trip-dinner-subtitle class="text-xs text-stone-500 mt-1"></p>
                 </div>
 
-                <!-- Dining Atmosphere Photo -->
-                <div data-trip-single-image="dinner" class="mb-6 rounded-2xl overflow-hidden border border-stone-200 shadow-sm relative group">
-                    <img data-trip-image="dinner" alt="" class="w-full object-cover group-hover:scale-90 transition-transform duration-300">
-                    <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-3 text-white text-xs md:text-sm flex items-center">
-                        <i class="fa-solid fa-heart text-rose-400 mr-2"></i><span data-trip-image-caption></span>
-                    </div>
-                </div>
-                <div data-trip-image-gallery="menuGallery" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div data-trip-image-list class="contents"></div>
-                </div>
-
                 <div data-trip-dinner-categories class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
                 <div data-trip-family-assignments class="mt-6 border-t border-stone-200 pt-6 hidden">
                     <h3 data-trip-family-assignments-title class="font-bold text-base text-forest mb-3 text-center"></h3>
                     <div data-trip-family-assignments-list class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
                 </div>
                 <p data-trip-dinner-reminder class="text-xs text-center text-stone-500 mt-3 hidden"></p>
+
+                <!-- Dining Atmosphere Photo -->
+                <div data-trip-single-image="dinner" class="mt-6 rounded-2xl overflow-hidden border border-stone-200 shadow-sm relative group">
+                    <img data-trip-image="dinner" alt="" class="w-full object-cover group-hover:scale-90 transition-transform duration-300">
+                    <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-3 text-white text-xs md:text-sm flex items-center">
+                        <i class="fa-solid fa-heart text-rose-400 mr-2"></i><span data-trip-image-caption></span>
+                    </div>
+                </div>
+                <div data-trip-image-gallery="menuGallery" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div data-trip-image-list class="contents"></div>
+                </div>
 
             </div>
 
@@ -1081,13 +1085,25 @@
                 card.className = 'bg-white rounded-2xl p-6 border border-stone-200 shadow-sm';
 
                 const heading = document.createElement('h3');
-                heading.className = 'font-extrabold text-xl md:text-2xl text-forest flex items-center border-b pb-3 mb-4';
+                heading.className = 'border-b pb-3 mb-4';
+                const toggleButton = document.createElement('button');
+                toggleButton.type = 'button';
+                toggleButton.className = 'flex w-full items-center text-left font-extrabold text-xl md:text-2xl text-forest';
                 const badge = document.createElement('span');
                 badge.className = 'bg-forest text-white text-xs md:text-sm px-3 py-1 rounded-lg mr-2';
                 badge.textContent = `DAY ${dayIndex + 1}`;
-                heading.append(badge, document.createTextNode(`${day.label || ''} ${day.title || ''}`));
+                const headingText = document.createElement('span');
+                headingText.className = 'flex-1';
+                headingText.textContent = `${day.label || ''} ${day.title || ''}`;
+                const toggleIcon = document.createElement('i');
+                toggleIcon.className = 'fa-solid fa-chevron-down text-base transition-transform';
+                toggleButton.append(badge, headingText, toggleIcon);
+                toggleButton.setAttribute('aria-expanded', 'true');
+                heading.appendChild(toggleButton);
                 card.appendChild(heading);
 
+                const content = document.createElement('div');
+                content.className = 'trip-schedule-day-content';
                 const referencesList = (Array.isArray(day.references) ? day.references : [])
                     .filter(reference => reference.title?.trim() || reference.url?.trim() || reference.mapUrl?.trim());
                 if (referencesList.length > 0) {
@@ -1118,7 +1134,7 @@
                         }
                         references.appendChild(row);
                     });
-                    card.appendChild(references);
+                    content.appendChild(references);
                 }
 
                 const timeline = document.createElement('div');
@@ -1219,7 +1235,14 @@
                     row.append(marker, body);
                     timeline.appendChild(row);
                 });
-                card.appendChild(timeline);
+                content.appendChild(timeline);
+                toggleButton.addEventListener('click', () => {
+                    const expanded = toggleButton.getAttribute('aria-expanded') === 'true';
+                    toggleButton.setAttribute('aria-expanded', String(!expanded));
+                    content.classList.toggle('hidden', expanded);
+                    toggleIcon.classList.toggle('rotate-180', !expanded);
+                });
+                card.appendChild(content);
                 container.appendChild(card);
             });
             setTripElementHidden(container, days.length === 0);
@@ -1274,7 +1297,6 @@
             document.querySelector('[data-trip-dinner-subtitle]').textContent = tripConfig.dinnerSubtitle || '';
             setTripElementHidden(container, categories.length === 0);
             document.querySelector('[data-trip-dinner-label]').textContent = tripConfig.dinnerLabel || '';
-            document.querySelector('[data-trip-schedule-title]').textContent = tripConfig.scheduleTitle || '行程安排';
 
             const assignments = Array.isArray(tripConfig.familyAssignments) ? tripConfig.familyAssignments : [];
             const assignmentSection = document.querySelector('[data-trip-family-assignments]');
@@ -2517,6 +2539,18 @@
             loadFoodItems();
             loadGearItems();
             renderSplitApp();
+
+            const backToTop = document.getElementById('back-to-top');
+            const updateBackToTopVisibility = () => {
+                backToTop.classList.toggle('hidden', window.scrollY < 240);
+                backToTop.classList.toggle('flex', window.scrollY >= 240);
+            };
+            window.addEventListener('scroll', updateBackToTopVisibility, { passive: true });
+            backToTop.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'instant' });
+                updateBackToTopVisibility();
+            });
+            updateBackToTopVisibility();
         });
     </script>
 </body>
