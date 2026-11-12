@@ -1,0 +1,2452 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旅程資訊</title>
+    <script src="trip-config.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f4f7f4;
+            color: #2d3748;
+        }
+        .bg-forest {
+            background-color: #1e3f2d;
+        }
+        .text-forest {
+            color: #1e3f2d;
+        }
+        .border-forest {
+            border-color: #1e3f2d;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        .tab-btn.active {
+            background-color: #1e3f2d;
+            color: #ffffff;
+            font-weight: bold;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .checkbox-custom:checked + .item-label {
+            text-decoration: line-through;
+            color: #94a3b8;
+        }
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .checklist-filter-pill {
+            background-color: #f5f5f4;
+            color: #57534e;
+            border-color: #e7e5e4;
+        }
+        .checklist-filter-pill:hover {
+            background-color: #e7e5e4;
+        }
+        .checklist-filter-pill.active {
+            background-color: #1e3f2d;
+            color: #ffffff;
+            border-color: #1e3f2d;
+        }
+    </style>
+
+    <!-- Firebase Realtime Database Scripts (Modular via script type=module) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD_WDDtGW0WeSFP1plre-2L6QamVnCCMVY",
+            authDomain: "millieweb-3dffe.firebaseapp.com",
+            databaseURL: "https://millieweb-3dffe-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "millieweb-3dffe",
+            storageBucket: "millieweb-3dffe.firebasestorage.app",
+            messagingSenderId: "389133876060",
+            appId: "1:389133876060:web:6790b50b4759693af51f99",
+            measurementId: "G-7LPMD61T7J"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // 掛載至 window 供全域使用
+        window.firebaseDB = db;
+        window.fbRef = ref;
+        window.fbSet = set;
+        window.fbOnValue = onValue;
+
+        // 連線狀態監聽
+        const connectedRef = ref(db, ".info/connected");
+        onValue(connectedRef, (snap) => {
+            const statusEl = document.getElementById('sync-status-indicator');
+            if (statusEl) {
+                if (snap.val() === true) {
+                    statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> 雲端即時同步中';
+                    statusEl.className = "inline-flex items-center gap-1.5 bg-emerald-900/60 text-emerald-200 border border-emerald-500/30 px-2.5 py-1 rounded-full text-xs shadow-sm";
+                } else {
+                    statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-400"></span> 連線中斷 (離線)';
+                    statusEl.className = "inline-flex items-center gap-1.5 bg-rose-900/60 text-rose-200 border border-rose-500/30 px-2.5 py-1 rounded-full text-xs shadow-sm";
+                }
+            }
+        });
+
+        // 觸發自定義事件通知 DOM 載入雲端監聽
+        window.dispatchEvent(new Event('firebase-ready'));
+    </script>
+</head>
+<body class="pb-16 antialiased">
+
+    <!-- Header / Hero Section -->
+    <header class="relative bg-forest text-white py-12 md:py-16 px-4 shadow-xl overflow-hidden">
+        <div class="absolute inset-0 opacity-30">
+            <img data-trip-hero-image data-trip-image="hero" alt="" class="w-full h-full object-cover">
+        </div>
+        <div class="relative max-w-4xl mx-auto text-center space-y-4">
+            <div class="flex flex-wrap justify-center items-center gap-2">
+                <span data-trip-tagline class="inline-block bg-amber-500 text-stone-900 font-bold px-4 py-1 rounded-full text-xs md:text-sm tracking-wide shadow-md">
+                    旅程副標
+                </span>
+                <span id="sync-status-indicator" class="inline-flex items-center gap-1.5 bg-black/40 text-stone-300 border border-white/20 px-2.5 py-1 rounded-full text-xs shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> 連線至雲端中...
+                </span>
+            </div>
+            <h1 data-trip-title class="text-3xl md:text-5xl font-black tracking-tight leading-tight drop-shadow-md">
+                旅程標題
+            </h1>
+            <p class="text-amber-200 text-sm md:text-base font-medium drop-shadow">
+                📅 預計日期：<span data-trip-date></span> | 📍 <span data-trip-location></span>
+            </p>
+            
+            <!-- Quick Info Badges -->
+            <div class="flex flex-wrap justify-center gap-2.5 pt-2 text-xs md:text-sm">
+                <span class="bg-black/40 backdrop-blur border border-white/20 px-3 py-1.5 rounded-lg shadow-sm">
+                    <i class="fa-solid fa-caravan mr-1 text-amber-300"></i> 房型：<span data-trip-room></span>
+                </span>
+      
+                <span class="bg-black/40 backdrop-blur border border-white/20 px-3 py-1.5 rounded-lg shadow-sm">
+                    <i class="fa-solid fa-users mr-1 text-amber-300"></i> 陣容：<span data-trip-participants></span>
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Navigation Bar -->
+    <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-stone-200 shadow-sm">
+        <div class="max-w-4xl mx-auto relative">
+            <div id="main-nav-scroll" class="flex overflow-x-auto no-scrollbar justify-start sm:justify-around p-2 text-xs sm:text-sm font-medium text-stone-600 gap-1 sm:gap-2">
+                <button onclick="switchTab('info')" id="tab-info" data-tab="info" class="tab-btn active shrink-0 px-3 py-2 rounded-lg transition-all">
+                    <i class="fa-solid fa-circle-info mr-1"></i> <span data-tab-label>行前概覽</span>
+                </button>
+                <button onclick="switchTab('schedule')" id="tab-schedule" data-tab="schedule" class="tab-btn shrink-0 px-3 py-2 rounded-lg transition-all">
+                    <i class="fa-solid fa-calendar-days mr-1"></i> <span data-tab-label>行程安排</span>
+                </button>
+                <button onclick="switchTab('menu')" id="tab-menu" data-tab="menu" class="tab-btn shrink-0 px-3 py-2 rounded-lg transition-all">
+                    <i class="fa-solid fa-utensils mr-1"></i> <span data-tab-label>營區晚餐</span>
+                </button>
+                <button onclick="switchTab('personal')" id="tab-personal" data-tab="personal" class="tab-btn shrink-0 px-3 py-2 rounded-lg transition-all">
+                    <i class="fa-solid fa-suitcase-rolling mr-1"></i> <span data-tab-label>個人用品</span>
+                </button>
+                <button onclick="switchTab('checklist')" id="tab-checklist" data-tab="checklist" class="tab-btn shrink-0 px-3 py-2 rounded-lg transition-all">
+                    <i class="fa-solid fa-boxes-stacked mr-1"></i> <span data-tab-label>食材裝備</span> <span class="bg-emerald-100 text-emerald-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-0.5">即時</span>
+                </button>
+                <button onclick="switchTab('split')" id="tab-split" data-tab="split" class="tab-btn shrink-0 px-3 py-2 rounded-lg transition-all">
+                    <i class="fa-solid fa-calculator mr-1"></i> <span data-tab-label>分帳工具</span> <span class="bg-emerald-100 text-emerald-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-0.5">即時</span>
+                </button>
+            </div>
+            <div id="nav-fade-left" class="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white to-transparent opacity-0 transition-opacity duration-200"></div>
+            <div id="nav-fade-right" class="pointer-events-none absolute inset-y-0 right-0 w-8 flex items-center justify-end bg-gradient-to-l from-white to-transparent opacity-0 transition-opacity duration-200">
+                <i class="fa-solid fa-chevron-right text-stone-400 text-xs animate-pulse mr-0.5"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-4xl mx-auto px-4 pt-6">
+
+        <!-- TAB 1: 行前概覽 (INFO) -->
+        <section id="sec-info" class="space-y-6">
+
+            <!-- Location & Facilities Highlight Card -->
+            <div class="glass-card rounded-2xl p-6 border border-stone-200 shadow-sm relative overflow-hidden">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-stone-100 pb-4 mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 rounded-2xl bg-forest text-white flex items-center justify-center font-bold text-xl shadow-md">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                        </div>
+                        <div>
+                            <span class="badge-pill bg-emerald-100 text-emerald-800 mb-1">入園報名字：<span data-trip-checkin-name></span></span>
+                            <h3 data-trip-venue class="font-black text-xl text-forest"></h3>
+                            <p data-trip-checkin-info class="text-xs text-stone-500 mt-1"></p>
+                        </div>
+                    </div>
+                    <a data-trip-map-link href="https://maps.app.goo.gl/iEHWTxZxiRxtAK8Z9?g_st=ic" target="_blank" rel="noopener noreferrer"
+                       class="inline-flex items-center justify-center bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-sm">
+                        <i class="fa-solid fa-diamond-turn-right mr-2"></i> 開啟 Google 導航
+                    </a>
+                </div>
+
+                <!-- Facilities Badges Grid -->
+                <h4 data-trip-highlights-title class="font-bold text-sm text-forest mb-2"></h4>
+                <div data-trip-highlights class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs mb-4"></div>
+
+                <div class="flex flex-wrap gap-2 text-xs text-stone-600 pt-2 border-t border-stone-100">
+                    <a data-trip-venue-link href="https://bmr.bluemagpie.com.tw/" target="_blank" rel="noopener noreferrer" class="hover:text-emerald-700 underline"><i class="fa-solid fa-globe mr-1"></i><span data-trip-venue-link-label>住宿地點官網</span></a>
+                    <span class="text-stone-300">|</span>
+                    <a data-trip-room-link href="https://bmr.bluemagpie.com.tw/camping_5.php" target="_blank" rel="noopener noreferrer" class="hover:text-emerald-700 underline"><i class="fa-solid fa-caravan mr-1"></i><span data-trip-room-link-label>房型介紹</span></a>
+                </div>
+            </div>
+
+            <!-- Map & Venue Section -->
+            <div class="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 data-trip-map-title class="font-bold text-lg text-forest flex items-center">
+                        <i class="fa-solid fa-map text-emerald-600 mr-2"></i> 園區地圖與住宿位置指引
+                    </h3>
+                    <span data-trip-map-area-label class="text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-bold">星空城堡．雨備場</span>
+                </div>
+                <div data-trip-image-container="map" class="rounded-xl overflow-hidden border border-stone-200 shadow-inner bg-stone-100">
+                    <img data-trip-map-image data-trip-image="map" alt="住宿地點地圖" class="w-full h-auto object-contain max-h-[480px] mx-auto">
+                </div>
+                
+                <p class="text-xs text-stone-500"><i class="fa-solid fa-circle-info mr-1 text-emerald-600"></i><span data-trip-map-description></span></p>
+            </div>
+
+            <div data-trip-image-gallery="overview" class="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm">
+                <h3 class="font-bold text-lg text-forest mb-4 flex items-center">
+                    <i class="fa-solid fa-images text-teal-600 mr-2"></i> 行程與住宿資訊圖卡
+                </h3>
+                <div data-trip-image-list class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <div data-trip-accommodation class="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm">
+                <h3 class="font-bold text-lg text-forest mb-4 flex items-center">
+                    <i class="fa-solid fa-house-chimney-window text-amber-500 mr-2"></i> <span data-trip-accommodation-title></span>
+                </h3>
+                <div data-trip-accommodation-list class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"></div>
+                <p data-trip-accommodation-note class="text-xs text-stone-500 mt-3 hidden"></p>
+            </div>
+
+            <!-- Venue photos -->
+            <div data-trip-public-facilities data-trip-image-gallery="venueGallery" class="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm">
+                <h3 class="font-bold text-lg text-forest mb-4 flex items-center">
+                    <i class="fa-solid fa-images text-teal-600 mr-2"></i> <span data-trip-public-facilities-title></span>
+                </h3>
+                <div data-trip-image-list class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                <div data-trip-public-facilities-list class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4"></div>
+            </div>
+
+            <!-- Campsite Rules & Policies Summary -->
+            <div data-trip-rules class="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm space-y-4">
+                <div class="flex items-center justify-between border-b pb-3">
+                    <h3 class="font-bold text-lg text-rose-900 flex items-center">
+                        <i class="fa-solid fa-clipboard-list text-rose-600 mr-2"></i> <span data-trip-rules-title>住宿須知 & 重要守則</span>
+                    </h3>
+                    <span class="text-xs bg-rose-100 text-rose-800 font-bold px-2.5 py-1 rounded-full">務必詳閱</span>
+                </div>
+                <div data-trip-rules-list class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-stone-700"></div>
+
+                <details data-trip-image-gallery="rules" class="bg-stone-50 rounded-xl border border-stone-200 p-3 text-xs">
+                    <summary class="font-bold text-stone-700 cursor-pointer hover:text-emerald-700 flex items-center justify-between select-none">
+                        <span data-trip-rules-images-title><i class="fa-solid fa-file-invoice mr-1 text-stone-500"></i> 查看營區規定圖片</span>
+                        <span class="text-stone-400 font-normal">展開 / 收合</span>
+                    </summary>
+                    <div data-trip-image-list class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 mt-2 border-t border-stone-200"></div>
+                </details>
+            </div>
+
+            <div data-trip-reminders class="bg-amber-50/80 border-2 border-amber-300 rounded-2xl p-5 shadow-sm">
+                <h3 class="font-bold text-base text-amber-950 mb-3 flex items-center">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600 mr-2 text-lg"></i> <span data-trip-reminders-title></span>
+                </h3>
+                <div data-trip-reminders-list class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 text-xs text-amber-950 font-medium"></div>
+            </div>
+
+        </section>
+
+        <!-- TAB 2: 行程安排 (SCHEDULE) -->
+        <section id="sec-schedule" class="hidden space-y-6">
+            <h2 data-trip-schedule-title class="text-xl font-black text-forest"></h2>
+            <div data-trip-image-gallery="schedule" class="bg-white rounded-2xl p-5 border border-stone-200 shadow-sm">
+                <h3 class="font-bold text-lg text-forest mb-3">行程參考圖片</h3>
+                <div data-trip-image-list class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+            <div data-trip-schedule-days class="space-y-6"></div>
+        </section>
+
+        <!-- TAB 3: 營區晚餐 -->
+        <section id="sec-menu" class="hidden space-y-6">
+            
+            <div class="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm">
+                <div class="text-center border-b pb-4 mb-6">
+                    <span data-trip-dinner-label class="text-xs bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-full"></span>
+                    <h2 data-trip-dinner-title class="text-2xl sm:text-3xl font-black text-forest mt-2"></h2>
+                    <p data-trip-dinner-subtitle class="text-xs text-stone-500 mt-1"></p>
+                </div>
+
+                <!-- Dining Atmosphere Photo -->
+                <div data-trip-single-image="dinner" class="mb-6 rounded-2xl overflow-hidden border border-stone-200 shadow-sm relative group">
+                    <img data-trip-image="dinner" alt="" class="w-full object-cover group-hover:scale-90 transition-transform duration-300">
+                    <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-3 text-white text-xs md:text-sm flex items-center">
+                        <i class="fa-solid fa-heart text-rose-400 mr-2"></i><span data-trip-image-caption></span>
+                    </div>
+                </div>
+                <div data-trip-image-gallery="menuGallery" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div data-trip-image-list class="contents"></div>
+                </div>
+
+                <div data-trip-dinner-categories class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
+                <div data-trip-family-assignments class="mt-6 border-t border-stone-200 pt-6 hidden">
+                    <h3 data-trip-family-assignments-title class="font-bold text-base text-forest mb-3 text-center"></h3>
+                    <div data-trip-family-assignments-list class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+                </div>
+                <p data-trip-dinner-reminder class="text-xs text-center text-stone-500 mt-3 hidden"></p>
+
+            </div>
+
+        </section>
+
+        <!-- TAB 4: 個人用品 CHECKLIST (PERSONAL) -->
+        <section id="sec-personal" class="hidden space-y-6">
+            
+            <!-- Progress Bar & Actions Header -->
+            <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-forest text-base sm:text-lg">🧳 個人用品打包清單</span>
+                            <span id="personal-progress-percent" class="font-bold text-emerald-600 text-lg">0%</span>
+                        </div>
+                        <p class="text-xs text-stone-500">此區為個人專屬紀錄，資料自動存於各自身機瀏覽器中。</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="openAddItemModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs sm:text-sm flex items-center shadow-sm transition-all">
+                            <i class="fa-solid fa-plus mr-1.5"></i> 新增項目
+                        </button>
+                        <button onclick="resetPersonalItems()" title="重設為預設清單" class="bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold px-2.5 py-1.5 rounded-xl text-xs transition-all border border-stone-200">
+                            <i class="fa-solid fa-rotate-left"></i> 重設
+                        </button>
+                    </div>
+                </div>
+                <div class="w-full bg-stone-200 h-3 rounded-full overflow-hidden">
+                    <div id="personal-progress-bar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Dynamic Categories Container -->
+            <div id="personal-items-container" class="space-y-6"></div>
+
+        </section>
+
+        <!-- TAB 5: 食材＆裝備整合 CHECKLIST (CHECKLIST) -->
+        <section id="sec-checklist" class="hidden space-y-6">
+
+            <!-- Filter Pills -->
+            <div class="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm">
+                <div class="flex items-center justify-between gap-3 mb-1 flex-wrap">
+                    <span class="font-bold text-forest text-base sm:text-lg">🧺 食材＆裝備整備清單</span>
+                    <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">即時同步</span>
+                </div>
+                <p class="text-xs text-stone-500 mb-3">食材清單、營地裝備、當天採買彙整在同一頁，用下方分類切換檢視。</p>
+                <div class="flex gap-2 flex-wrap">
+                    <button onclick="setChecklistFilter('all')" id="checklist-filter-all" class="checklist-filter-pill active px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold border transition-all">全部</button>
+                    <button onclick="setChecklistFilter('food')" id="checklist-filter-food" class="checklist-filter-pill px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold border transition-all">🍱 食材清單</button>
+                    <button onclick="setChecklistFilter('gear')" id="checklist-filter-gear" class="checklist-filter-pill px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold border transition-all">⛺ 營地裝備</button>
+                    <button onclick="setChecklistFilter('shopping')" id="checklist-filter-shopping" class="checklist-filter-pill px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold border transition-all">🛒 當天採買</button>
+                </div>
+            </div>
+
+            <!-- GROUP: 食材清單 -->
+            <div id="checklist-group-food" class="space-y-6">
+
+                <!-- Progress Bar & Actions Header -->
+                <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <span class="font-bold text-forest text-base sm:text-lg">🍱 食材準備進度 (Food Progress)</span>
+                                <span id="food-progress-percent" class="font-bold text-emerald-600 text-lg">0%</span>
+                            </div>
+                            <p class="text-xs text-stone-500">所有人新增、編輯或刪除食材項目，畫面皆會即時同步。</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="openAddFoodModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs sm:text-sm flex items-center shadow-sm transition-all">
+                                <i class="fa-solid fa-plus mr-1.5"></i> 新增食材項目
+                            </button>
+                            <button onclick="resetFoodItems()" title="重設為預設清單" class="bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold px-2.5 py-1.5 rounded-xl text-xs transition-all border border-stone-200">
+                                <i class="fa-solid fa-rotate-left"></i> 重設
+                            </button>
+                        </div>
+                    </div>
+                    <div class="w-full bg-stone-200 h-3 rounded-full overflow-hidden">
+                        <div id="food-progress-bar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Cold Storage -->
+                <div class="bg-white rounded-2xl p-5 border border-stone-200 shadow-sm">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-base sm:text-lg text-forest flex items-center">
+                            <i class="fa-solid fa-snowflake text-blue-500 mr-2"></i>                             <span data-trip-checklist-group-label="food:cold"></span>
+                        </h3>
+                        <span id="food-cold-count" class="badge-pill bg-blue-100 text-blue-800">0 項</span>
+                    </div>
+                    <div class="hidden sm:block overflow-x-auto">
+                        <table class="w-full text-xs sm:text-sm text-left">
+                            <thead class="bg-stone-100 text-stone-600 font-bold">
+                                <tr>
+                                    <th class="p-2.5 rounded-l-lg">勾選</th>
+                                    <th class="p-2.5">類別</th>
+                                    <th class="p-2.5">菜單/食材名稱</th>
+                                    <th class="p-2.5">份量/容器</th>
+                                    <th class="p-2.5">盛盤</th>
+                                    <th class="p-2.5">前置處理與備註</th>
+                                    <th class="p-2.5 rounded-r-lg text-right">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="food-cold-tbody" class="divide-y divide-stone-100" ondragover="handleFoodTbodyDragOver(event)" ondrop="handleFoodTbodyDrop(event, 'cold')"></tbody>
+                        </table>
+                    </div>
+                    <div id="food-cold-cards" class="sm:hidden space-y-2" ondragover="handleFoodTbodyDragOver(event)" ondrop="handleFoodTbodyDrop(event, 'cold')"></div>
+                </div>
+
+                <!-- Ambient Dry Goods -->
+                <div class="bg-white rounded-2xl p-5 border border-stone-200 shadow-sm">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-base sm:text-lg text-forest flex items-center">
+                            <i class="fa-solid fa-box-open text-amber-500 mr-2"></i> <span data-trip-checklist-group-label="food:ambient"></span>
+                        </h3>
+                        <span id="food-ambient-count" class="badge-pill bg-amber-100 text-amber-800">0 項</span>
+                    </div>
+                    <div class="hidden sm:block overflow-x-auto">
+                        <table class="w-full text-xs sm:text-sm text-left">
+                            <thead class="bg-stone-100 text-stone-600 font-bold">
+                                <tr>
+                                    <th class="p-2.5 rounded-l-lg">勾選</th>
+                                    <th class="p-2.5">類別</th>
+                                    <th class="p-2.5">菜單/項目名稱</th>
+                                    <th class="p-2.5">份量/容器</th>
+                                    <th class="p-2.5">盛盤</th>
+                                    <th class="p-2.5">前置處理與備註</th>
+                                    <th class="p-2.5 rounded-r-lg text-right">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="food-ambient-tbody" class="divide-y divide-stone-100" ondragover="handleFoodTbodyDragOver(event)" ondrop="handleFoodTbodyDrop(event, 'ambient')"></tbody>
+                        </table>
+                    </div>
+                    <div id="food-ambient-cards" class="sm:hidden space-y-2" ondragover="handleFoodTbodyDragOver(event)" ondrop="handleFoodTbodyDrop(event, 'ambient')"></div>
+                </div>
+
+            </div>
+
+            <!-- GROUP: 營地裝備 -->
+            <div id="checklist-group-gear" class="space-y-6">
+
+                <!-- Progress Bar & Actions Header -->
+                <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <span class="font-bold text-forest text-base sm:text-lg">⛺ 營地裝備進度 (Gear Progress)</span>
+                                <span id="gear-progress-percent" class="font-bold text-emerald-600 text-lg">0%</span>
+                            </div>
+                            <p class="text-xs text-stone-500">所有人新增、編輯或刪除裝備項目，畫面皆會即時同步。</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="openAddGearModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs sm:text-sm flex items-center shadow-sm transition-all">
+                                <i class="fa-solid fa-plus mr-1.5"></i> 新增裝備項目
+                            </button>
+                            <button onclick="resetGearItems()" title="重設為預設清單" class="bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold px-2.5 py-1.5 rounded-xl text-xs transition-all border border-stone-200">
+                                <i class="fa-solid fa-rotate-left"></i> 重設
+                            </button>
+                        </div>
+                    </div>
+                    <div class="w-full bg-stone-200 h-3 rounded-full overflow-hidden">
+                        <div id="gear-progress-bar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Cooking Gear & Tableware -->
+                <div class="bg-white rounded-2xl p-5 border border-stone-200 shadow-sm">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-base sm:text-lg text-forest flex items-center">
+                            <i class="fa-solid fa-fire-burner text-rose-500 mr-2"></i> <span data-trip-checklist-group-label="gear:cooking"></span>
+                        </h3>
+                        <span id="gear-cooking-count" class="badge-pill bg-rose-100 text-rose-800">0 項</span>
+                    </div>
+                    <div class="hidden sm:block overflow-x-auto">
+                        <table class="w-full text-xs sm:text-sm text-left">
+                            <thead class="bg-stone-100 text-stone-600 font-bold">
+                                <tr>
+                                    <th class="p-2.5 rounded-l-lg">勾選</th>
+                                    <th class="p-2.5">類別</th>
+                                    <th class="p-2.5">裝備項目名稱</th>
+                                    <th class="p-2.5">數量</th>
+                                    <th class="p-2.5">規格 / 檢核重點</th>
+                                    <th class="p-2.5 rounded-r-lg text-right">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gear-cooking-tbody" class="divide-y divide-stone-100" ondragover="handleGearTbodyDragOver(event)" ondrop="handleGearTbodyDrop(event, 'cooking')"></tbody>
+                        </table>
+                    </div>
+                    <div id="gear-cooking-cards" class="sm:hidden space-y-2" ondragover="handleGearTbodyDragOver(event)" ondrop="handleGearTbodyDrop(event, 'cooking')"></div>
+                </div>
+
+                <!-- Kitchen Tools & Campsite Gear -->
+                <div class="bg-white rounded-2xl p-5 border border-stone-200 shadow-sm">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-base sm:text-lg text-forest flex items-center">
+                            <i class="fa-solid fa-utensils text-emerald-600 mr-2"></i> <span data-trip-checklist-group-label="gear:kitchen"></span>
+                        </h3>
+                        <span id="gear-kitchen-count" class="badge-pill bg-emerald-100 text-emerald-800">0 項</span>
+                    </div>
+                    <div class="hidden sm:block overflow-x-auto">
+                        <table class="w-full text-xs sm:text-sm text-left">
+                            <thead class="bg-stone-100 text-stone-600 font-bold">
+                                <tr>
+                                    <th class="p-2.5 rounded-l-lg">勾選</th>
+                                    <th class="p-2.5">類別</th>
+                                    <th class="p-2.5">裝備項目名稱</th>
+                                    <th class="p-2.5">數量</th>
+                                    <th class="p-2.5">規格 / 檢核重點</th>
+                                    <th class="p-2.5 rounded-r-lg text-right">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gear-kitchen-tbody" class="divide-y divide-stone-100" ondragover="handleGearTbodyDragOver(event)" ondrop="handleGearTbodyDrop(event, 'kitchen')"></tbody>
+                        </table>
+                    </div>
+                    <div id="gear-kitchen-cards" class="sm:hidden space-y-2" ondragover="handleGearTbodyDragOver(event)" ondrop="handleGearTbodyDrop(event, 'kitchen')"></div>
+                </div>
+
+            </div>
+
+            <!-- GROUP: 當天採買彙整 -->
+            <div id="checklist-group-shopping">
+                <div class="bg-white rounded-2xl p-5 border border-stone-200 shadow-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                        <div>
+                            <h3 class="font-bold text-base sm:text-lg text-forest flex items-center">
+                                <i class="fa-solid fa-cart-shopping text-amber-600 mr-2"></i> <span data-trip-checklist-shopping-title></span>
+                            </h3>
+                            <p data-trip-checklist-shopping-description class="text-xs text-stone-500 mt-0.5"></p>
+                        </div>
+                        <span id="shopping-progress-percent" class="font-bold text-emerald-600 text-lg shrink-0">0%</span>
+                    </div>
+                    <div class="w-full bg-stone-200 h-3 rounded-full overflow-hidden mb-3">
+                        <div id="shopping-progress-bar" class="bg-amber-500 h-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs sm:text-sm text-left">
+                            <thead class="bg-stone-100 text-stone-600 font-bold">
+                                <tr>
+                                    <th class="p-2.5 rounded-l-lg">勾選</th>
+                                    <th class="p-2.5">項目</th>
+                                    <th class="p-2.5">類別</th>
+                                    <th class="p-2.5">數量</th>
+                                    <th class="p-2.5 rounded-r-lg">來源清單</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shopping-list-tbody" class="divide-y divide-stone-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- TAB 7: 分帳小工具 (SPLIT) -->
+        <section id="sec-split" class="hidden space-y-6">
+            
+            <!-- 成員設定 -->
+            <div class="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm space-y-3">
+                <div class="flex items-center justify-between border-b pb-3">
+                    <h3 class="font-bold text-lg text-forest flex items-center">
+                        <i class="fa-solid fa-users text-emerald-600 mr-2"></i> 參與成員與家庭管理
+                    </h3>
+                    <span class="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full font-bold">✨ 雲端即時多人同步</span>
+                </div>
+                <p class="text-xs text-stone-500">各家庭墊付與分攤資料，已接上雲端資料庫，任何人新增或修改項目，所有人畫面皆會即時更新！</p>
+                <div class="flex gap-2">
+                    <input type="text" id="familyInput" placeholder="輸入成員名稱" class="flex-1 border border-stone-300 rounded-xl p-2.5 text-sm bg-stone-50 focus:outline-emerald-600">
+                    
+                </div>
+                <button onclick="addFamily()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-sm transition-all shadow-sm shrink-0">
+                        <i class="fa-solid fa-user-plus mr-1"></i> 新增成員
+                    </button>
+                <div id="familyTags" class="flex gap-2 flex-wrap pt-2"></div>
+            </div>
+
+            <!-- 新增/編輯消費項目表單 -->
+            <div class="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm space-y-4">
+                <h3 id="formTitle" class="font-bold text-lg text-forest flex items-center border-b pb-3">
+                    <i class="fa-solid fa-receipt text-amber-500 mr-2"></i> 新增消費項目
+                </h3>
+                <input type="hidden" id="editIndex" value="-1">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-stone-600 mb-1">品項名稱</label>
+                        <input type="text" id="itemName" placeholder="例如：全聯食材、飲料啤酒" class="w-full border border-stone-300 rounded-xl p-2.5 text-sm bg-stone-50 focus:outline-emerald-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-stone-600 mb-1">金額 (NTD)</label>
+                        <input type="number" id="itemAmount" placeholder="0" min="0" class="w-full border border-stone-300 rounded-xl p-2.5 text-sm bg-stone-50 focus:outline-emerald-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-stone-600 mb-1">付款人 (哪家墊付)</label>
+                        <select id="payerSelect" class="w-full border border-stone-300 rounded-xl p-2.5 text-sm bg-stone-50 focus:outline-emerald-600"></select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1.5">分攤成員 (預設全員均分)</label>
+                    <div class="flex flex-wrap gap-3" id="splitGroup"></div>
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button onclick="saveItem()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-sm transition-all shadow-sm">
+                        <i class="fa-solid fa-floppy-disk mr-1"></i> 儲存項目
+                    </button>
+                    <button onclick="resetForm()" id="cancelEditBtn" class="hidden bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold px-4 py-2 rounded-xl text-sm transition-all border border-stone-200">
+                        取消編輯
+                    </button>
+                </div>
+            </div>
+
+            <!-- 購物明細清單 -->
+            <div class="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm space-y-3">
+                <h3 class="font-bold text-lg text-forest flex items-center border-b pb-3">
+                    <i class="fa-solid fa-list-check text-blue-500 mr-2"></i> 購物明細清單
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs sm:text-sm text-left">
+                        <thead class="bg-stone-100 text-stone-600 font-bold">
+                            <tr>
+                                <th class="p-2.5 rounded-l-lg">品項</th>
+                                <th class="p-2.5">金額</th>
+                                <th class="p-2.5">墊付者</th>
+                                <th class="p-2.5">分攤對象</th>
+                                <th class="p-2.5 rounded-r-lg text-right">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemsTableBody" class="divide-y divide-stone-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 各家收支總結 -->
+            <div class="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm space-y-3">
+                <h3 class="font-bold text-lg text-forest flex items-center border-b pb-3">
+                    <i class="fa-solid fa-scale-balanced text-teal-600 mr-2"></i> 各家收支總結
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs sm:text-sm text-left">
+                        <thead class="bg-stone-100 text-stone-600 font-bold">
+                            <tr>
+                                <th class="p-2.5 rounded-l-lg">家庭 / 成員</th>
+                                <th class="p-2.5">總墊付金額</th>
+                                <th class="p-2.5">應分攤金額</th>
+                                <th class="p-2.5 rounded-r-lg">淨收支 (應收 / 應付)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryTableBody" class="divide-y divide-stone-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 最終結清轉帳建議 -->
+            <div class="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm space-y-3">
+                <h3 class="font-bold text-lg text-forest flex items-center border-b pb-3">
+                    <i class="fa-solid fa-money-bill-transfer text-emerald-600 mr-2"></i> 最終結清方案 (誰該給誰多少錢)
+                </h3>
+                <div id="settlementList" class="space-y-2.5"></div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Modal for Adding/Editing Item -->
+    <div id="item-modal" class="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-stone-200">
+            <h3 id="modal-title" class="font-bold text-lg text-forest mb-4">新增個人用品</h3>
+            
+            <div class="space-y-3.5 text-sm">
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">分類類別</label>
+                    <select id="input-category" data-trip-checklist-category="personal" class="w-full border border-stone-300 rounded-xl p-2.5 bg-stone-50 focus:outline-emerald-600 text-stone-800"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">物品名稱</label>
+                    <input type="text" id="input-name" placeholder="例如：防蚊手環、太陽眼鏡" class="w-full border border-stone-300 rounded-xl p-2.5 bg-stone-50 focus:outline-emerald-600 text-stone-800">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">數量 / 規格</label>
+                    <input type="text" id="input-qty" placeholder="例如：1 個、2 雙" class="w-full border border-stone-300 rounded-xl p-2.5 bg-stone-50 focus:outline-emerald-600 text-stone-800">
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-2 mt-6">
+                <button onclick="closeModal()" class="px-4 py-2 text-stone-500 hover:text-stone-700 text-sm font-medium">取消</button>
+                <button onclick="savePersonalModalItem()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all">儲存項目</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Adding/Editing Food Item -->
+    <div id="food-modal" class="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-stone-200">
+            <h3 id="food-modal-title" class="font-bold text-lg text-forest mb-4">新增食材項目</h3>
+
+            <div class="space-y-3.5 text-sm">
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">存放分區</label>
+                    <select id="food-input-section" data-trip-checklist-section="food" class="w-full border border-stone-300 rounded-xl p-2.5 bg-stone-50 focus:outline-emerald-600 text-stone-800"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">類別</label>
+                    <select id="food-input-category" data-trip-checklist-category="food" class="w-full border border-stone-300 rounded-xl p-2.5 bg-stone-50 focus:outline-emerald-600 text-stone-800"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">菜單/食材名稱</label>
+                    <input type="text" id="food-input-name" placeholder="例如：白飯、烤肉醬" class="w-full border border-stone-300 rounded-xl p-2.5 bg-stone-50 focus:outline-emerald-600 text-stone-800">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-stone-600 mb-1">份量/容器</label>
+                        <input type="text" id="food-input-qty" placeholder="例如：1 份 / 保鮮盒" class="w-full border border-stone-300 rounded-xl p-2.5 bg-stone-50 focus:outline-emerald-600 text-stone-800">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-stone-600 mb-1">盛盤</label>
+                        <input type="text" id="food-input-plate" placeholder="例如：大盤 1（無則留白）" class="w-full border border-stone-300 rounded-xl p-2.5 bg-stone-50 focus:outline-emerald-600 text-stone-800">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">前置處理與備註</label>
+                    <input type="text" id="food-input-note" placeholder="例如：前一天 D-1 醃漬冷藏" class="w-full border border-stone-300 rounded-xl p-2.5 bg-stone-50 focus:outline-emerald-600 text-stone-800">
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-2 mt-6">
+                <button onclick="closeFoodModal()" class="px-4 py-2 text-stone-500 hover:text-stone-700 text-sm font-medium">取消</button>
+                <button onclick="saveFoodModalItem()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all">儲存項目</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Adding/Editing Gear Item -->
+    <div id="gear-modal" class="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-stone-200">
+            <h3 id="gear-modal-title" class="font-bold text-lg text-forest mb-4">新增裝備項目</h3>
+
+            <div class="space-y-3.5 text-sm">
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">存放分區</label>
+                    <select id="gear-input-section" data-trip-checklist-section="gear" class="w-full border border-stone-300 rounded-xl p-2.5 bg-stone-50 focus:outline-emerald-600 text-stone-800"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">類別</label>
+                    <select id="gear-input-category" data-trip-checklist-category="gear" class="w-full border border-stone-300 rounded-xl p-2.5 bg-stone-50 focus:outline-emerald-600 text-stone-800"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">裝備項目名稱</label>
+                    <input type="text" id="gear-input-name" placeholder="例如：卡式爐、大夾子" class="w-full border border-stone-300 rounded-xl p-2.5 bg-stone-50 focus:outline-emerald-600 text-stone-800">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">數量</label>
+                    <input type="text" id="gear-input-qty" placeholder="例如：1 個、2 爐" class="w-full border border-stone-300 rounded-xl p-2.5 bg-stone-50 focus:outline-emerald-600 text-stone-800">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">規格 / 檢核重點</label>
+                    <input type="text" id="gear-input-note" placeholder="例如：出發前確認點火正常" class="w-full border border-stone-300 rounded-xl p-2.5 bg-stone-50 focus:outline-emerald-600 text-stone-800">
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-2 mt-6">
+                <button onclick="closeGearModal()" class="px-4 py-2 text-stone-500 hover:text-stone-700 text-sm font-medium">取消</button>
+                <button onclick="saveGearModalItem()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all">儲存項目</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-xs text-stone-400 py-6 border-t border-stone-200">
+        <p data-trip-footer></p>
+    </footer>
+
+    <!-- Interactive Script -->
+    <script>
+        const tripConfig = window.TRIP_CONFIG;
+        const knownTripTabs = ['info', 'schedule', 'menu', 'personal', 'checklist', 'split'];
+        if (!tripConfig || !/^[a-z0-9-]+$/.test(tripConfig.id) || !Array.isArray(tripConfig.tabs) ||
+            tripConfig.tabs.length === 0 || new Set(tripConfig.tabs).size !== tripConfig.tabs.length ||
+            tripConfig.tabs.some(tab => !knownTripTabs.includes(tab)) ||
+            !Array.isArray(tripConfig.families) ||
+            !tripConfig.families.every(family => typeof family === 'string') ||
+            !Array.isArray(tripConfig.scheduleDayLabels) || tripConfig.scheduleDayLabels.length < 2) {
+            throw new Error('trip-config.js 的旅程 ID、頁籤、成員或日期設定無效。');
+        }
+
+        const tripStorageKey = key => tripConfig.id === 'blue-magpie'
+            ? ({
+                personal_items_v2: 'blue_magpie_personal_items_v2',
+                food_items_v1: 'blue_magpie_food_items_v1',
+                gear_items_v1: 'blue_magpie_gear_items_v1',
+                split_families: 'split_families',
+                split_items: 'split_items'
+            }[key] || `blue_magpie_${key}`)
+            : `${tripConfig.id}:${key}`;
+        const tripFirebasePath = collection => tripConfig.id === 'blue-magpie'
+            ? ({
+                food_items: 'camping_food_items',
+                gear_items: 'camping_gear_items',
+                split: 'camping_split'
+            }[collection] || collection)
+            : `trips/${tripConfig.id}/${collection}`;
+
+        function normalizeTripImage(image) {
+            if (typeof image === 'string') return { src: image };
+            if (image && typeof image === 'object' && typeof image.src === 'string') return image;
+            return null;
+        }
+
+        function setTripElementHidden(element, isHidden) {
+            element.hidden = isHidden;
+            element.classList.toggle('hidden', isHidden);
+        }
+
+        function applyTripImage(key, imageConfig, fallbackAlt) {
+            const image = document.querySelector(`[data-trip-image="${key}"]`);
+            if (!image) return;
+
+            const config = normalizeTripImage(imageConfig);
+            const container = document.querySelector(`[data-trip-image-container="${key}"]`) || image.parentElement;
+            if (!config || !config.src) {
+                setTripElementHidden(container, true);
+                return;
+            }
+
+            setTripElementHidden(container, false);
+            image.src = config.src;
+            image.alt = config.alt || fallbackAlt;
+
+            const caption = container.querySelector('[data-trip-image-caption]');
+            if (caption) {
+                caption.textContent = config.caption || '';
+                caption.parentElement.hidden = !config.caption;
+            }
+        }
+
+        function renderTripImageGallery(key, imageConfigs) {
+            const gallery = document.querySelector(`[data-trip-image-gallery="${key}"]`);
+            if (!gallery) return;
+
+            const imageList = gallery.querySelector('[data-trip-image-list]');
+            const images = Array.isArray(imageConfigs)
+                ? imageConfigs.map(normalizeTripImage).filter(image => image && image.src)
+                : [];
+            imageList.replaceChildren();
+            if (key !== 'venueGallery') setTripElementHidden(gallery, images.length === 0);
+
+            images.forEach(config => {
+                const link = document.createElement('a');
+                link.href = config.src;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.className = 'block rounded-xl overflow-hidden border border-stone-200 hover:opacity-90';
+
+                const image = document.createElement('img');
+                image.src = config.src;
+                image.alt = config.alt || config.caption || '旅程相關圖片';
+                image.loading = 'lazy';
+                image.className = 'w-full h-auto object-contain';
+                link.appendChild(image);
+
+                if (config.caption) {
+                    const caption = document.createElement('p');
+                    caption.textContent = config.caption;
+                    caption.className = 'text-xs text-stone-600 font-medium p-2';
+                    link.appendChild(caption);
+                }
+
+                imageList.appendChild(link);
+            });
+
+            if (key === 'venueGallery') {
+                const hasFacilities = gallery.querySelector('[data-trip-public-facilities-list]').childElementCount > 0;
+                setTripElementHidden(gallery, images.length === 0 && !hasFacilities);
+            }
+        }
+
+        function createTripCard(title, detail, icon, className = '') {
+            const card = document.createElement('div');
+            card.className = className || 'p-3 bg-stone-50 rounded-xl border border-stone-100';
+
+            const heading = document.createElement('div');
+            heading.className = 'font-bold text-sm mb-0.5';
+            if (icon) {
+                const iconElement = document.createElement('i');
+                iconElement.className = `fa-solid ${icon} mr-1`;
+                heading.appendChild(iconElement);
+            }
+            heading.appendChild(document.createTextNode(title || ''));
+            card.appendChild(heading);
+
+            if (detail) {
+                const description = document.createElement('div');
+                description.className = 'text-xs text-stone-500';
+                description.textContent = detail;
+                card.appendChild(description);
+            }
+            return card;
+        }
+
+        function renderTripHighlights() {
+            const highlights = Array.isArray(tripConfig.venueHighlights) ? tripConfig.venueHighlights : [];
+            const container = document.querySelector('[data-trip-highlights]');
+            container.replaceChildren();
+            document.querySelector('[data-trip-highlights-title]').textContent = tripConfig.venueHighlightsTitle || '';
+            highlights.forEach((entry, index) => {
+                const item = entry.key === 'breakfast'
+                    ? { ...entry, title: tripConfig.breakfast.title, detail: tripConfig.breakfast.time }
+                    : entry;
+                const styles = [
+                    'bg-teal-50 border border-teal-100 text-teal-900 p-3 rounded-xl',
+                    'bg-amber-50 border border-amber-100 text-amber-900 p-3 rounded-xl',
+                    'bg-indigo-50 border border-indigo-100 text-indigo-900 p-3 rounded-xl',
+                    'bg-rose-50 border border-rose-100 text-rose-900 p-3 rounded-xl'
+                ];
+                container.appendChild(createTripCard(item.title, item.detail, item.icon, styles[index % styles.length]));
+            });
+            setTripElementHidden(container, highlights.length === 0);
+            setTripElementHidden(document.querySelector('[data-trip-highlights-title]'), highlights.length === 0);
+        }
+
+        function renderTripAccommodation() {
+            const facilities = Array.isArray(tripConfig.venueFacilities) ? tripConfig.venueFacilities : [];
+            const container = document.querySelector('[data-trip-accommodation-list]');
+            container.replaceChildren();
+            facilities.forEach(item => {
+                container.appendChild(createTripCard(
+                    item.title,
+                    item.detail,
+                    item.icon,
+                    'p-3 bg-stone-50 rounded-xl border border-stone-100'
+                ));
+            });
+            document.querySelector('[data-trip-accommodation-title]').textContent = tripConfig.accommodationTitle || '住宿設備';
+            const note = document.querySelector('[data-trip-accommodation-note]');
+            note.textContent = tripConfig.accommodationNote || '';
+            note.classList.toggle('hidden', !tripConfig.accommodationNote);
+            setTripElementHidden(
+                document.querySelector('[data-trip-accommodation]'),
+                facilities.length === 0 && !tripConfig.accommodationNote
+            );
+        }
+
+        function renderTripRules() {
+            const rules = Array.isArray(tripConfig.accommodationRules) ? tripConfig.accommodationRules : [];
+            const container = document.querySelector('[data-trip-rules-list]');
+            container.replaceChildren();
+            rules.forEach(rule => {
+                const item = document.createElement('div');
+                item.className = 'p-3 bg-stone-50 rounded-xl border border-stone-100 text-stone-700';
+                item.textContent = typeof rule === 'string' ? rule : [rule.title, rule.detail].filter(Boolean).join('：');
+                container.appendChild(item);
+            });
+            document.querySelector('[data-trip-rules-title]').textContent = tripConfig.rulesTitle || '住宿須知 & 重要守則';
+            setTripElementHidden(
+                document.querySelector('[data-trip-rules]'),
+                rules.length === 0 && !(tripConfig.images?.rules || []).length
+            );
+            const notice = document.querySelector('[data-trip-rules] .rounded-full');
+            notice.textContent = tripConfig.rulesNoticeLabel || '';
+            notice.hidden = !tripConfig.rulesNoticeLabel;
+            const imageTitle = document.querySelector('[data-trip-rules-images-title]');
+            imageTitle.lastChild.textContent = ` ${tripConfig.rulesImagesTitle || '查看營區規定圖片'}`;
+        }
+
+        function renderTripPublicFacilities() {
+            const list = document.querySelector('[data-trip-public-facilities-list]');
+            list.replaceChildren();
+            (Array.isArray(tripConfig.publicFacilities) ? tripConfig.publicFacilities : []).forEach(item => {
+                list.appendChild(createTripCard(
+                    item.title,
+                    item.detail,
+                    item.icon,
+                    'p-3 bg-stone-50 rounded-xl border border-stone-100'
+                ));
+            });
+            document.querySelector('[data-trip-public-facilities-title]').textContent =
+                tripConfig.venueGalleryTitle || '營區實景與公共設備';
+        }
+
+        function renderTripReminders() {
+            const reminders = Array.isArray(tripConfig.reminders) ? tripConfig.reminders : [];
+            const section = document.querySelector('[data-trip-reminders]');
+            const list = document.querySelector('[data-trip-reminders-list]');
+            list.replaceChildren();
+            reminders.forEach(reminder => {
+                const item = document.createElement('div');
+                item.className = 'bg-white/90 p-2.5 rounded-lg border border-amber-200 text-center shadow-2xs';
+                item.textContent = reminder;
+                list.appendChild(item);
+            });
+            setTripElementHidden(section, reminders.length === 0);
+            document.querySelector('[data-trip-reminders-title]').textContent = tripConfig.remindersTitle || '出發前提醒';
+        }
+
+        function renderTripChecklistSettings() {
+            const categories = tripConfig.checklistCategories || {};
+            const groups = tripConfig.checklistGroups || {};
+            document.querySelectorAll('[data-trip-checklist-category]').forEach(select => {
+                const options = Array.isArray(categories[select.dataset.tripChecklistCategory])
+                    ? categories[select.dataset.tripChecklistCategory]
+                    : [];
+                select.replaceChildren();
+                options.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.value;
+                    option.textContent = item.label;
+                    select.appendChild(option);
+                });
+            });
+
+            document.querySelectorAll('[data-trip-checklist-section]').forEach(select => {
+                const sectionGroups = Array.isArray(groups[select.dataset.tripChecklistSection])
+                    ? groups[select.dataset.tripChecklistSection]
+                    : [];
+                select.replaceChildren();
+                sectionGroups.forEach(group => {
+                    const option = document.createElement('option');
+                    option.value = group.id;
+                    option.textContent = [group.title, group.detail].filter(Boolean).join(' — ');
+                    select.appendChild(option);
+                });
+            });
+
+            document.querySelectorAll('[data-trip-checklist-group-label]').forEach(label => {
+                const [type, id] = label.dataset.tripChecklistGroupLabel.split(':');
+                const group = groups[type]?.find(item => item.id === id);
+                label.textContent = group ? [group.title, group.detail].filter(Boolean).join(' ') : '';
+            });
+            document.querySelector('[data-trip-checklist-shopping-title]').textContent =
+                groups.shoppingTitle || '當天採買清單';
+            document.querySelector('[data-trip-checklist-shopping-description]').textContent =
+                groups.shoppingDescription || '';
+        }
+
+        function renderTripSchedule() {
+            const container = document.querySelector('[data-trip-schedule-days]');
+            const days = Array.isArray(tripConfig.scheduleDays) ? tripConfig.scheduleDays : [];
+            const createMapLink = (url, label = '開啟 Google 導航') => {
+                const link = document.createElement('a');
+                link.href = url;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.className = 'inline-flex items-center justify-center bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-2 rounded-lg text-xs transition-all shadow-sm';
+                const icon = document.createElement('i');
+                icon.className = 'fa-solid fa-diamond-turn-right mr-2';
+                link.append(icon, document.createTextNode(label));
+                return link;
+            };
+            container.replaceChildren();
+            days.forEach((day, dayIndex) => {
+                const card = document.createElement('article');
+                card.className = 'bg-white rounded-2xl p-6 border border-stone-200 shadow-sm';
+
+                const heading = document.createElement('h3');
+                heading.className = 'font-extrabold text-xl md:text-2xl text-forest flex items-center border-b pb-3 mb-4';
+                const badge = document.createElement('span');
+                badge.className = 'bg-forest text-white text-xs md:text-sm px-3 py-1 rounded-lg mr-2';
+                badge.textContent = `DAY ${dayIndex + 1}`;
+                heading.append(badge, document.createTextNode(`${day.label || ''} ${day.title || ''}`));
+                card.appendChild(heading);
+
+                if (day.references?.length) {
+                    const references = document.createElement('div');
+                    references.className = 'bg-stone-50 rounded-xl border border-stone-200 p-4 mb-5';
+                    const referencesTitle = document.createElement('h4');
+                    referencesTitle.className = 'font-bold text-stone-800 mb-2';
+                    referencesTitle.textContent = tripConfig.scheduleReferencesTitle || '行程參考資訊';
+                    references.appendChild(referencesTitle);
+                    day.references.forEach(reference => {
+                        const row = document.createElement('div');
+                        row.className = 'flex flex-wrap items-center gap-2 py-1.5 text-sm';
+                        const label = document.createElement('span');
+                        label.className = 'font-medium';
+                        label.textContent = reference.title;
+                        row.appendChild(label);
+                        if (reference.url) {
+                            const link = document.createElement('a');
+                            link.href = reference.url;
+                            link.target = '_blank';
+                            link.rel = 'noopener noreferrer';
+                            link.className = 'text-emerald-700 underline';
+                            link.textContent = reference.linkLabel || '查看資訊';
+                            row.appendChild(link);
+                        }
+                        if (reference.mapUrl) {
+                            row.appendChild(createMapLink(reference.mapUrl, reference.mapLabel));
+                        }
+                        references.appendChild(row);
+                    });
+                    card.appendChild(references);
+                }
+
+                const timeline = document.createElement('div');
+                timeline.className = 'space-y-4 relative before:absolute before:inset-y-0 before:left-3.5 before:w-0.5 before:bg-emerald-200';
+                (Array.isArray(day.events) ? day.events : []).forEach((entry, eventIndex) => {
+                    const event = entry.key === 'breakfast'
+                        ? { ...entry, ...tripConfig.breakfast }
+                        : entry;
+                    const row = document.createElement('div');
+                    row.className = 'relative pl-8';
+                    const marker = document.createElement('div');
+                    marker.className = 'absolute left-0 top-1.5 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold ring-4 ring-white';
+                    marker.textContent = (event.time || '').match(/\d{1,2}/)?.[0] || `${eventIndex + 1}`;
+
+                    const body = document.createElement('div');
+                    body.className = 'bg-stone-50 p-4 rounded-xl border border-stone-200';
+                    const time = document.createElement('span');
+                    time.className = 'text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded';
+                    time.textContent = event.time || '';
+                    const title = document.createElement('h4');
+                    title.className = 'font-bold text-base text-stone-800 mt-1';
+                    title.textContent = event.title || '';
+                    body.append(time, title);
+                    if (event.detail) {
+                        const detail = document.createElement('p');
+                        detail.className = 'text-xs sm:text-sm text-stone-600 mt-1';
+                        detail.textContent = event.detail;
+                        body.appendChild(detail);
+                    }
+                    if (event.mapUrl) {
+                        body.appendChild(createMapLink(event.mapUrl, event.mapLabel));
+                    }
+                    row.append(marker, body);
+                    timeline.appendChild(row);
+                });
+                card.appendChild(timeline);
+                container.appendChild(card);
+            });
+            setTripElementHidden(container, days.length === 0);
+        }
+
+        function renderTripDinner() {
+            const colorClasses = {
+                amber: 'bg-amber-50/70 border-amber-200 text-amber-900',
+                rose: 'bg-rose-50/70 border-rose-200 text-rose-900',
+                teal: 'bg-teal-50/70 border-teal-200 text-teal-900',
+                blue: 'bg-blue-50/70 border-blue-200 text-blue-900',
+                orange: 'bg-orange-50/70 border-orange-200 text-orange-900',
+                purple: 'bg-purple-50/70 border-purple-200 text-purple-900',
+                stone: 'bg-stone-50 border-stone-200 text-stone-900'
+            };
+            const container = document.querySelector('[data-trip-dinner-categories]');
+            const categories = Array.isArray(tripConfig.dinnerCategories) ? tripConfig.dinnerCategories : [];
+            container.replaceChildren();
+            categories.forEach(entry => {
+                const category = entry.key === 'breakfast'
+                    ? {
+                        ...entry,
+                        title: `${tripConfig.scheduleDayLabels[1]} ${entry.title}`,
+                        items: [
+                            `${tripConfig.breakfast.time} ${tripConfig.breakfast.title}`,
+                            tripConfig.breakfast.detail
+                        ].filter(Boolean)
+                    }
+                    : entry;
+                const color = colorClasses[category.color] || colorClasses.stone;
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-xl border ${color}`;
+                const title = document.createElement('h3');
+                title.className = 'font-bold text-base border-b border-current/20 pb-2 mb-2 flex items-center';
+                if (category.icon) {
+                    const icon = document.createElement('i');
+                    icon.className = `fa-solid ${category.icon} mr-2`;
+                    title.appendChild(icon);
+                }
+                title.appendChild(document.createTextNode(category.title || '餐點'));
+                const list = document.createElement('ul');
+                list.className = 'space-y-2 text-xs sm:text-sm text-stone-700';
+                (Array.isArray(category.items) ? category.items : []).forEach(value => {
+                    const item = document.createElement('li');
+                    item.textContent = typeof value === 'string' ? value : [value.name, value.detail].filter(Boolean).join('：');
+                    list.appendChild(item);
+                });
+                card.append(title, list);
+                container.appendChild(card);
+            });
+            document.querySelector('[data-trip-dinner-title]').textContent = tripConfig.dinnerTitle || '';
+            document.querySelector('[data-trip-dinner-subtitle]').textContent = tripConfig.dinnerSubtitle || '';
+            setTripElementHidden(container, categories.length === 0);
+            document.querySelector('[data-trip-dinner-label]').textContent = tripConfig.dinnerLabel || '';
+            document.querySelector('[data-trip-schedule-title]').textContent = tripConfig.scheduleTitle || '行程安排';
+
+            const assignments = Array.isArray(tripConfig.familyAssignments) ? tripConfig.familyAssignments : [];
+            const assignmentSection = document.querySelector('[data-trip-family-assignments]');
+            const assignmentList = document.querySelector('[data-trip-family-assignments-list]');
+            assignmentList.replaceChildren();
+            assignments.forEach(assignment => {
+                const card = document.createElement('div');
+                card.className = 'p-3.5 bg-emerald-50 rounded-xl border border-emerald-200 text-sm';
+                const title = document.createElement('div');
+                title.className = 'font-bold text-emerald-900 mb-1';
+                title.textContent = assignment.family;
+                const list = document.createElement('ul');
+                list.className = 'text-xs text-emerald-800 space-y-1';
+                (Array.isArray(assignment.items) ? assignment.items : []).forEach(value => {
+                    const item = document.createElement('li');
+                    item.textContent = `• ${value}`;
+                    list.appendChild(item);
+                });
+                card.append(title, list);
+                assignmentList.appendChild(card);
+            });
+            setTripElementHidden(assignmentSection, assignments.length === 0);
+            document.querySelector('[data-trip-family-assignments-title]').textContent =
+                tripConfig.familyAssignmentsTitle || '各家分配與準備項目';
+            const reminder = document.querySelector('[data-trip-dinner-reminder]');
+            reminder.textContent = tripConfig.dinnerReminder || '';
+            reminder.classList.toggle('hidden', !tripConfig.dinnerReminder);
+        }
+
+        function applyTripConfig() {
+            document.title = tripConfig.pageTitle;
+            document.querySelector('[data-trip-title]').textContent = tripConfig.title;
+            document.querySelector('[data-trip-tagline]').textContent = tripConfig.tagline;
+            document.querySelector('[data-trip-date]').textContent = tripConfig.dateText;
+            document.querySelector('[data-trip-location]').textContent = tripConfig.location;
+            document.querySelector('[data-trip-room]').textContent = tripConfig.room;
+            document.querySelector('[data-trip-participants]').textContent = tripConfig.participants;
+            document.querySelector('[data-trip-venue]').textContent = tripConfig.venue;
+            document.querySelector('[data-trip-checkin-name]').textContent =
+                tripConfig.checkInName || tripConfig.checkInContact || '';
+            document.querySelector('[data-trip-checkin-info]').textContent = tripConfig.checkInInfo || '';
+            document.querySelectorAll('[data-trip-map-link]').forEach(link => {
+                link.href = tripConfig.mapUrl;
+            });
+            document.querySelector('[data-trip-map-area-label]').textContent = tripConfig.mapAreaLabel;
+            document.querySelector('[data-trip-map-description]').textContent = tripConfig.mapDescription;
+            document.querySelector('[data-trip-map-title]').lastChild.textContent =
+                ` ${tripConfig.mapTitle || '園區地圖 & 住宿位置指引'}`;
+            document.querySelector('[data-trip-venue-link]').href = tripConfig.venueWebsiteUrl;
+            document.querySelector('[data-trip-room-link]').href = tripConfig.roomInfoUrl;
+            document.querySelector('[data-trip-venue-link-label]').textContent = tripConfig.venueWebsiteLabel || '住宿地點官網';
+            document.querySelector('[data-trip-room-link-label]').textContent = tripConfig.roomInfoLabel || '房型介紹';
+            document.querySelector('[data-trip-dinner-label]').textContent = tripConfig.dinnerLabel || '';
+            document.querySelector('[data-trip-footer]').textContent =
+                `🏕️ ${tripConfig.dateText} ${tripConfig.venue} • 祝大家玩得超盡興！`;
+
+            const images = tripConfig.images || {};
+            applyTripImage('hero', images.hero || tripConfig.heroImage, tripConfig.venue);
+            applyTripImage('map', images.map || tripConfig.mapImage, `${tripConfig.venue}地圖`);
+            applyTripImage('dinner', images.dinner, tripConfig.venue);
+            renderTripHighlights();
+            renderTripAccommodation();
+            renderTripRules();
+            renderTripPublicFacilities();
+            renderTripReminders();
+            renderTripChecklistSettings();
+            renderTripSchedule();
+            renderTripDinner();
+            ['overview', 'venueGallery', 'rules', 'schedule', 'scheduleMeals', 'menuGallery'].forEach(key => {
+                renderTripImageGallery(key, images[key]);
+            });
+
+            const nav = document.getElementById('main-nav-scroll');
+            const buttons = Array.from(nav.querySelectorAll('[data-tab]'));
+            tripConfig.tabs.forEach(tab => {
+                const button = buttons.find(item => item.dataset.tab === tab);
+                button.querySelector('[data-tab-label]').textContent =
+                    (tab === 'menu' && tripConfig.menuTabTitle) ||
+                    tripConfig.tabLabels?.[tab] || button.querySelector('[data-tab-label]').textContent;
+                nav.appendChild(button);
+            });
+            buttons.forEach(button => {
+                button.hidden = !tripConfig.tabs.includes(button.dataset.tab);
+            });
+
+            switchTab(tripConfig.tabs[0]);
+        }
+
+        // TAB SWITCHING LOGIC
+        function switchTab(tabName) {
+            knownTripTabs.forEach(s => {
+                const el = document.getElementById('sec-' + s);
+                const btn = document.getElementById('tab-' + s);
+                if(el) el.classList.add('hidden');
+                if(btn) btn.classList.remove('active');
+            });
+
+            if (!tripConfig.tabs.includes(tabName)) return;
+            const targetEl = document.getElementById('sec-' + tabName);
+            const targetBtn = document.getElementById('tab-' + tabName);
+            if(targetEl) targetEl.classList.remove('hidden');
+            if(targetBtn) targetBtn.classList.add('active');
+        }
+
+        // CHECKLIST FILTER (食材/裝備/當天採買 整合頁籤內切換)
+        let checklistFilter = 'all';
+        function setChecklistFilter(filter) {
+            checklistFilter = filter;
+
+            const groups = { food: 'checklist-group-food', gear: 'checklist-group-gear', shopping: 'checklist-group-shopping' };
+            Object.keys(groups).forEach(key => {
+                const el = document.getElementById(groups[key]);
+                if (!el) return;
+                const visible = filter === 'all' || filter === key;
+                el.classList.toggle('hidden', !visible);
+            });
+
+            ['all', 'food', 'gear', 'shopping'].forEach(key => {
+                const pill = document.getElementById('checklist-filter-' + key);
+                if (pill) pill.classList.toggle('active', key === filter);
+            });
+        }
+
+        // NAV BAR SCROLL HINT (fade edges show when there's more to scroll)
+        function updateNavFades() {
+            const scrollEl = document.getElementById('main-nav-scroll');
+            const fadeLeft = document.getElementById('nav-fade-left');
+            const fadeRight = document.getElementById('nav-fade-right');
+            if (!scrollEl || !fadeLeft || !fadeRight) return;
+            const maxScroll = scrollEl.scrollWidth - scrollEl.clientWidth;
+            fadeLeft.style.opacity = scrollEl.scrollLeft > 4 ? '1' : '0';
+            fadeRight.style.opacity = scrollEl.scrollLeft < maxScroll - 4 ? '1' : '0';
+        }
+
+        (function initNavFades() {
+            const scrollEl = document.getElementById('main-nav-scroll');
+            if (!scrollEl) return;
+            scrollEl.addEventListener('scroll', updateNavFades);
+            window.addEventListener('resize', updateNavFades);
+            window.addEventListener('load', updateNavFades);
+            updateNavFades();
+        })();
+
+        // ==========================================
+        // FIREBASE REALTIME SYNC HANDLERS
+        // ==========================================
+
+        function initFirebaseListeners() {
+            if (!window.firebaseDB) return;
+
+            // 1. 監聽食材清單
+            const foodItemsRef = window.fbRef(window.firebaseDB, tripFirebasePath('food_items'));
+            window.fbOnValue(foodItemsRef, (snap) => {
+                const data = snap.val();
+                foodItems = data && data.length ? data : JSON.parse(JSON.stringify(DEFAULT_FOOD_ITEMS));
+                renderFoodItems();
+            });
+
+            // 2. 監聽營地裝備
+            const gearItemsRef = window.fbRef(window.firebaseDB, tripFirebasePath('gear_items'));
+            window.fbOnValue(gearItemsRef, (snap) => {
+                const data = snap.val();
+                gearItems = data && data.length ? data : JSON.parse(JSON.stringify(DEFAULT_GEAR_ITEMS));
+                renderGearItems();
+            });
+
+            // 3. 監聽分帳小工具
+            const splitRef = window.fbRef(window.firebaseDB, tripFirebasePath('split'));
+            window.fbOnValue(splitRef, (snap) => {
+                const data = snap.val();
+                if (data) {
+                    families = data.families || [...tripConfig.families];
+                    items = data.items || [];
+                }
+                renderSplitApp();
+            });
+        }
+
+        window.addEventListener('firebase-ready', () => {
+            initFirebaseListeners();
+        });
+
+        // ==========================================
+        // DYNAMIC PERSONAL ITEMS MANAGEMENT (LocalStorage)
+        // ==========================================
+        const DEFAULT_PERSONAL_ITEMS = Array.isArray(tripConfig.checklists?.personal)
+            ? tripConfig.checklists.personal
+            : [];
+
+        let personalItems = [];
+        let editingItemId = null;
+
+        function loadPersonalItems() {
+            const saved = localStorage.getItem(tripStorageKey('personal_items_v2'));
+            if (saved) {
+                try {
+                    personalItems = JSON.parse(saved);
+                } catch(e) {
+                    personalItems = JSON.parse(JSON.stringify(DEFAULT_PERSONAL_ITEMS));
+                }
+            } else {
+                personalItems = JSON.parse(JSON.stringify(DEFAULT_PERSONAL_ITEMS));
+            }
+            renderPersonalItems();
+        }
+
+        function savePersonalToStorage() {
+            localStorage.setItem(tripStorageKey('personal_items_v2'), JSON.stringify(personalItems));
+            updatePersonalProgress();
+        }
+
+        const CATEGORY_MAP = {
+            "衛生清潔": { icon: "fa-pump-soap", color: "blue", title: "衛生清潔" },
+            "保養": { icon: "fa-spa", color: "teal", title: "保養舒緩" },
+            "衣物": { icon: "fa-shirt", color: "amber", title: "衣物穿搭" },
+            "玩樂": { icon: "fa-gamepad", color: "indigo", title: "玩樂休閒" },
+            "設備": { icon: "fa-plug", color: "purple", title: "隨身設備 & 餐具" },
+            "藥品": { icon: "fa-briefcase-medical", color: "rose", title: "常備藥品" }
+        };
+
+        function renderPersonalItems() {
+            const container = document.getElementById('personal-items-container');
+            container.innerHTML = '';
+
+            const groups = {};
+            personalItems.forEach(item => {
+                const cat = item.category || "設備";
+                if (!groups[cat]) groups[cat] = [];
+                groups[cat].push(item);
+            });
+
+            const displayCategories = ["衛生清潔", "保養", "衣物", "玩樂", "藥品", "設備"];
+            Object.keys(groups).forEach(cat => {
+                if (!displayCategories.includes(cat)) displayCategories.push(cat);
+            });
+
+            displayCategories.forEach(catKey => {
+                const itemsInCat = groups[catKey];
+                if (!itemsInCat || itemsInCat.length === 0) return;
+
+                const meta = CATEGORY_MAP[catKey] || { icon: "fa-box", color: "stone", title: catKey };
+                
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-2xl p-5 border border-stone-200 shadow-sm";
+
+                let itemsHtml = itemsInCat.map(item => `
+                    <div class="group flex items-center justify-between p-2.5 hover:bg-stone-50 rounded-xl border border-stone-100 transition-all">
+                        <div class="flex items-center space-x-2.5 flex-1 min-w-0 mr-2">
+                            <input type="checkbox" id="p_item_${item.id}" ${item.checked ? 'checked' : ''} 
+                                   onchange="toggleItemChecked(${item.id})" class="checkbox-custom w-4 h-4 text-emerald-600 rounded cursor-pointer shrink-0">
+                            <label for="p_item_${item.id}" class="item-label text-xs sm:text-sm font-medium text-stone-800 cursor-pointer truncate select-none">
+                                <span class="editable-name" contenteditable="true" spellcheck="false" onblur="updateItemInline(${item.id}, 'name', this.innerText)">${item.name}</span> 
+                                <span class="text-xs text-stone-400 font-normal">(${item.qty || '1個'})</span>
+                            </label>
+                        </div>
+                        <div class="flex items-center space-x-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                            <button onclick="openEditModal(${item.id})" title="編輯" class="text-stone-400 hover:text-emerald-600 p-1.5 rounded-lg hover:bg-emerald-50 text-xs">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="deletePersonalItem(${item.id})" title="刪除" class="text-stone-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 text-xs">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-base sm:text-lg text-forest flex items-center">
+                            <i class="fa-solid ${meta.icon} text-${meta.color}-500 mr-2"></i> ${meta.title}
+                        </h3>
+                        <span class="badge-pill bg-${meta.color}-100 text-${meta.color}-800">${itemsInCat.length} 項</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                        ${itemsHtml}
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            updatePersonalProgress();
+        }
+
+        function toggleItemChecked(id) {
+            const item = personalItems.find(i => i.id === id);
+            if (item) {
+                item.checked = !item.checked;
+                savePersonalToStorage();
+            }
+        }
+
+        function updateItemInline(id, field, value) {
+            const item = personalItems.find(i => i.id === id);
+            if (item && value.trim() !== '') {
+                item[field] = value.trim();
+                savePersonalToStorage();
+            }
+        }
+
+        function deletePersonalItem(id) {
+            if (confirm("確定要刪除這個用品項目嗎？")) {
+                personalItems = personalItems.filter(i => i.id !== id);
+                savePersonalToStorage();
+                renderPersonalItems();
+            }
+        }
+
+        function openAddItemModal() {
+            editingItemId = null;
+            document.getElementById('modal-title').innerText = "新增個人用品";
+            document.getElementById('input-name').value = '';
+            document.getElementById('input-qty').value = '1 個';
+            document.getElementById('item-modal').classList.remove('hidden');
+        }
+
+        function openEditModal(id) {
+            const item = personalItems.find(i => i.id === id);
+            if (!item) return;
+            editingItemId = id;
+            document.getElementById('modal-title').innerText = "編輯個人用品";
+            document.getElementById('input-category').value = item.category;
+            document.getElementById('input-name').value = item.name;
+            document.getElementById('input-qty').value = item.qty || '1 個';
+            document.getElementById('item-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('item-modal').classList.add('hidden');
+        }
+
+        function savePersonalModalItem() {
+            const cat = document.getElementById('input-category').value;
+            const name = document.getElementById('input-name').value.trim();
+            const qty = document.getElementById('input-qty').value.trim() || '1 個';
+
+            if (!name) {
+                alert("請輸入物品名稱！");
+                return;
+            }
+
+            if (editingItemId !== null) {
+                const item = personalItems.find(i => i.id === editingItemId);
+                if (item) {
+                    item.category = cat;
+                    item.name = name;
+                    item.qty = qty;
+                }
+            } else {
+                const newId = Date.now();
+                personalItems.push({
+                    id: newId,
+                    category: cat,
+                    name: name,
+                    qty: qty,
+                    checked: false
+                });
+            }
+
+            savePersonalToStorage();
+            renderPersonalItems();
+            closeModal();
+        }
+
+        function resetPersonalItems() {
+            if (confirm("確定要將個人用品清單重設為預設值嗎？")) {
+                personalItems = JSON.parse(JSON.stringify(DEFAULT_PERSONAL_ITEMS));
+                savePersonalToStorage();
+                renderPersonalItems();
+            }
+        }
+
+        function updatePersonalProgress() {
+            if (personalItems.length === 0) {
+                document.getElementById('personal-progress-bar').style.width = '0%';
+                document.getElementById('personal-progress-percent').innerText = '0%';
+                return;
+            }
+            const checkedCount = personalItems.filter(i => i.checked).length;
+            const percent = Math.round((checkedCount / personalItems.length) * 100);
+            document.getElementById('personal-progress-bar').style.width = percent + '%';
+            document.getElementById('personal-progress-percent').innerText = percent + '%';
+        }
+
+        // ==========================================
+        // DYNAMIC FOOD LIST MANAGEMENT (Firebase realtime, localStorage fallback)
+        // ==========================================
+        const DEFAULT_FOOD_ITEMS = Array.isArray(tripConfig.checklists?.food)
+            ? tripConfig.checklists.food
+            : [];
+
+        const FOOD_CATEGORY_COLORS = Object.fromEntries(
+            (tripConfig.checklistCategories?.food || []).map(category => [category.value, category.color || 'stone'])
+        );
+
+        let foodItems = [];
+        let editingFoodId = null;
+
+        function loadFoodItems() {
+            const saved = localStorage.getItem(tripStorageKey('food_items_v1'));
+            if (saved) {
+                try {
+                    foodItems = JSON.parse(saved);
+                } catch (e) {
+                    foodItems = JSON.parse(JSON.stringify(DEFAULT_FOOD_ITEMS));
+                }
+            } else {
+                foodItems = JSON.parse(JSON.stringify(DEFAULT_FOOD_ITEMS));
+            }
+            renderFoodItems();
+        }
+
+        function saveFoodItems() {
+            if (window.firebaseDB && window.fbRef && window.fbSet) {
+                window.fbSet(window.fbRef(window.firebaseDB, tripFirebasePath('food_items')), foodItems);
+            } else {
+                localStorage.setItem(tripStorageKey('food_items_v1'), JSON.stringify(foodItems));
+            }
+            renderFoodItems();
+        }
+
+        function renderFoodRow(item) {
+            const color = FOOD_CATEGORY_COLORS[item.category] || "stone";
+            const isBuyDay = (item.note || '').includes('當天');
+            const plateHtml = item.plate && item.plate !== '-'
+                ? `<span class="text-stone-800 font-medium">${item.plate}</span>`
+                : `<span class="text-stone-400">-</span>`;
+            const noteClass = isBuyDay ? 'text-stone-600 font-bold text-amber-700' : 'text-stone-600';
+            return `
+                <tr class="hover:bg-stone-50 transition-colors cursor-grab active:cursor-grabbing" data-food-id="${item.id}" draggable="true" ondragstart="handleFoodDragStart(event, ${item.id})" ondragend="handleFoodDragEnd(event)">
+                    <td class="p-2.5 cursor-pointer" onclick="toggleFoodChecked(${item.id})"><input type="checkbox" ${item.checked ? 'checked' : ''} class="checkbox-custom w-4 h-4 text-emerald-600 rounded pointer-events-none"></td>
+                    <td class="p-2.5"><span class="badge-pill bg-${color}-100 text-${color}-800">${item.category}</span></td>
+                    <td class="p-2.5 font-bold">${item.name}</td>
+                    <td class="p-2.5 text-stone-600">${item.qty || '-'}</td>
+                    <td class="p-2.5">${plateHtml}</td>
+                    <td class="p-2.5 ${noteClass}">${item.note || '-'}</td>
+                    <td class="p-2.5 text-right space-x-1 whitespace-nowrap">
+                        <button onclick="openEditFoodModal(${item.id})" title="編輯" class="text-stone-400 hover:text-emerald-600 p-1.5 rounded-lg hover:bg-emerald-50 text-xs"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteFoodItem(${item.id})" title="刪除" class="text-stone-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 text-xs"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function renderFoodCard(item) {
+            const color = FOOD_CATEGORY_COLORS[item.category] || "stone";
+            const isBuyDay = (item.note || '').includes('當天');
+            const noteClass = isBuyDay ? 'font-bold text-amber-700' : 'text-stone-500';
+            const metaBits = [item.qty, (item.plate && item.plate !== '-') ? item.plate : null].filter(Boolean).join(' · ');
+            return `
+                <div class="border border-stone-100 rounded-xl p-3 active:cursor-grabbing" data-food-id="${item.id}" draggable="true" ondragstart="handleFoodDragStart(event, ${item.id})" ondragend="handleFoodDragEnd(event)">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex items-start gap-2.5 flex-1 min-w-0 cursor-pointer" onclick="toggleFoodChecked(${item.id})">
+                            <input type="checkbox" ${item.checked ? 'checked' : ''} class="checkbox-custom w-4 h-4 mt-0.5 text-emerald-600 rounded pointer-events-none shrink-0">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-bold text-sm text-stone-800 break-words">${item.name}</span>
+                                    <span class="badge-pill bg-${color}-100 text-${color}-800 text-[10px] shrink-0">${item.category}</span>
+                                </div>
+                                ${metaBits ? `<div class="text-xs text-stone-500 mt-0.5">${metaBits}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="openEditFoodModal(${item.id})" title="編輯" class="text-stone-400 hover:text-emerald-600 p-1.5 rounded-lg hover:bg-emerald-50 text-xs"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteFoodItem(${item.id})" title="刪除" class="text-stone-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 text-xs"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </div>
+                    ${item.note && item.note !== '-' ? `<div class="text-xs ${noteClass} mt-1.5 pl-[26px] break-words">${item.note}</div>` : ''}
+                </div>
+            `;
+        }
+
+        function renderFoodItems() {
+            const coldItems = foodItems.filter(i => i.section === 'cold');
+            const ambientItems = foodItems.filter(i => i.section === 'ambient');
+            const emptyRow = `<tr><td colspan="7" class="p-4 text-center text-stone-400 text-xs">尚無項目，請點擊上方「新增食材項目」</td></tr>`;
+            const emptyCard = `<div class="p-4 text-center text-stone-400 text-xs">尚無項目，請點擊上方「新增食材項目」</div>`;
+
+            const coldTbody = document.getElementById('food-cold-tbody');
+            const ambientTbody = document.getElementById('food-ambient-tbody');
+            const coldCards = document.getElementById('food-cold-cards');
+            const ambientCards = document.getElementById('food-ambient-cards');
+
+            if (coldTbody) coldTbody.innerHTML = coldItems.length ? coldItems.map(renderFoodRow).join('') : emptyRow;
+            if (ambientTbody) ambientTbody.innerHTML = ambientItems.length ? ambientItems.map(renderFoodRow).join('') : emptyRow;
+            if (coldCards) coldCards.innerHTML = coldItems.length ? coldItems.map(renderFoodCard).join('') : emptyCard;
+            if (ambientCards) ambientCards.innerHTML = ambientItems.length ? ambientItems.map(renderFoodCard).join('') : emptyCard;
+
+            const coldCount = document.getElementById('food-cold-count');
+            const ambientCount = document.getElementById('food-ambient-count');
+            if (coldCount) coldCount.innerText = coldItems.length + ' 項';
+            if (ambientCount) ambientCount.innerText = ambientItems.length + ' 項';
+
+            updateFoodProgress();
+            renderShoppingList();
+        }
+
+        function toggleFoodChecked(id) {
+            const item = foodItems.find(i => i.id === id);
+            if (item) {
+                item.checked = !item.checked;
+                saveFoodItems();
+            }
+        }
+
+        // 手動拖拉排序
+        let draggedFoodId = null;
+
+        function handleFoodDragStart(e, id) {
+            draggedFoodId = id;
+            e.dataTransfer.effectAllowed = 'move';
+            try { e.dataTransfer.setData('text/plain', String(id)); } catch (err) {}
+            e.currentTarget.classList.add('opacity-40');
+        }
+
+        function handleFoodDragEnd(e) {
+            e.currentTarget.classList.remove('opacity-40');
+            document.querySelectorAll('.food-drag-over').forEach(el => el.classList.remove('food-drag-over', 'bg-emerald-50'));
+            draggedFoodId = null;
+        }
+
+        function handleFoodTbodyDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const row = e.target.closest('[data-food-id]');
+            document.querySelectorAll('.food-drag-over').forEach(el => el.classList.remove('food-drag-over', 'bg-emerald-50'));
+            if (row && Number(row.dataset.foodId) !== draggedFoodId) {
+                row.classList.add('food-drag-over', 'bg-emerald-50');
+            }
+        }
+
+        function handleFoodTbodyDrop(e, section) {
+            e.preventDefault();
+            document.querySelectorAll('.food-drag-over').forEach(el => el.classList.remove('food-drag-over', 'bg-emerald-50'));
+            if (draggedFoodId === null) return;
+
+            const targetRow = e.target.closest('[data-food-id]');
+            const targetId = targetRow ? Number(targetRow.dataset.foodId) : null;
+            if (targetId === draggedFoodId) { draggedFoodId = null; return; }
+
+            const fromIndex = foodItems.findIndex(i => i.id === draggedFoodId);
+            if (fromIndex === -1) { draggedFoodId = null; return; }
+            const [draggedItem] = foodItems.splice(fromIndex, 1);
+            draggedItem.section = section;
+
+            let toIndex = targetId !== null ? foodItems.findIndex(i => i.id === targetId) : -1;
+
+            if (toIndex === -1) {
+                let lastSectionIndex = -1;
+                foodItems.forEach((it, idx) => { if (it.section === section) lastSectionIndex = idx; });
+                toIndex = lastSectionIndex + 1;
+            }
+            foodItems.splice(toIndex, 0, draggedItem);
+
+            draggedFoodId = null;
+            saveFoodItems();
+        }
+
+        function openAddFoodModal() {
+            editingFoodId = null;
+            document.getElementById('food-modal-title').innerText = "新增食材項目";
+            document.getElementById('food-input-section').value = 'cold';
+            document.getElementById('food-input-category').value = '飲品';
+            document.getElementById('food-input-name').value = '';
+            document.getElementById('food-input-qty').value = '';
+            document.getElementById('food-input-plate').value = '';
+            document.getElementById('food-input-note').value = '';
+            document.getElementById('food-modal').classList.remove('hidden');
+        }
+
+        function openEditFoodModal(id) {
+            const item = foodItems.find(i => i.id === id);
+            if (!item) return;
+            editingFoodId = id;
+            document.getElementById('food-modal-title').innerText = "編輯食材項目";
+            document.getElementById('food-input-section').value = item.section;
+            document.getElementById('food-input-category').value = item.category;
+            document.getElementById('food-input-name').value = item.name;
+            document.getElementById('food-input-qty').value = item.qty || '';
+            document.getElementById('food-input-plate').value = item.plate || '';
+            document.getElementById('food-input-note').value = item.note || '';
+            document.getElementById('food-modal').classList.remove('hidden');
+        }
+
+        function closeFoodModal() {
+            document.getElementById('food-modal').classList.add('hidden');
+        }
+
+        function saveFoodModalItem() {
+            const section = document.getElementById('food-input-section').value;
+            const category = document.getElementById('food-input-category').value;
+            const name = document.getElementById('food-input-name').value.trim();
+            const qty = document.getElementById('food-input-qty').value.trim() || '-';
+            const plate = document.getElementById('food-input-plate').value.trim() || '-';
+            const note = document.getElementById('food-input-note').value.trim() || '-';
+
+            if (!name) {
+                alert("請輸入菜單/食材名稱！");
+                return;
+            }
+
+            if (editingFoodId !== null) {
+                const item = foodItems.find(i => i.id === editingFoodId);
+                if (item) {
+                    item.section = section;
+                    item.category = category;
+                    item.name = name;
+                    item.qty = qty;
+                    item.plate = plate;
+                    item.note = note;
+                }
+            } else {
+                const newItem = {
+                    id: Date.now(),
+                    section, category, name, qty, plate, note,
+                    checked: false
+                };
+                foodItems.splice(getFoodCategoryInsertIndex(section, category), 0, newItem);
+            }
+
+            saveFoodItems();
+            closeFoodModal();
+        }
+
+        function getFoodCategoryInsertIndex(section, category) {
+            let lastCategoryIndex = -1;
+            let lastSectionIndex = -1;
+            foodItems.forEach((it, idx) => {
+                if (it.section === section) {
+                    lastSectionIndex = idx;
+                    if (it.category === category) lastCategoryIndex = idx;
+                }
+            });
+            return (lastCategoryIndex !== -1 ? lastCategoryIndex : lastSectionIndex) + 1;
+        }
+
+        function deleteFoodItem(id) {
+            if (confirm("確定要刪除這個食材項目嗎？")) {
+                foodItems = foodItems.filter(i => i.id !== id);
+                saveFoodItems();
+            }
+        }
+
+        function resetFoodItems() {
+            if (confirm("確定要將食材清單重設為預設值嗎？")) {
+                foodItems = JSON.parse(JSON.stringify(DEFAULT_FOOD_ITEMS));
+                saveFoodItems();
+            }
+        }
+
+        // PROGRESS FOR FOOD & GEAR
+        function updateFoodProgress() {
+            const checkboxes = document.querySelectorAll('#checklist-group-food input[type="checkbox"]');
+            let checkedCount = 0;
+            checkboxes.forEach(chk => {
+                if(chk.checked) checkedCount++;
+            });
+            const percent = checkboxes.length ? Math.round((checkedCount / checkboxes.length) * 100) : 0;
+            document.getElementById('food-progress-bar').style.width = percent + '%';
+            document.getElementById('food-progress-percent').innerText = percent + '%';
+        }
+
+        function updateGearProgress() {
+            const checkboxes = document.querySelectorAll('#checklist-group-gear input[type="checkbox"]');
+            let checkedCount = 0;
+            checkboxes.forEach(chk => {
+                if(chk.checked) checkedCount++;
+            });
+            const percent = checkboxes.length ? Math.round((checkedCount / checkboxes.length) * 100) : 0;
+            document.getElementById('gear-progress-bar').style.width = percent + '%';
+            document.getElementById('gear-progress-percent').innerText = percent + '%';
+        }
+
+        // ==========================================
+        // DYNAMIC GEAR LIST MANAGEMENT (Firebase realtime, localStorage fallback)
+        // ==========================================
+        const DEFAULT_GEAR_ITEMS = Array.isArray(tripConfig.checklists?.gear)
+            ? tripConfig.checklists.gear
+            : [];
+
+        const GEAR_CATEGORY_COLORS = Object.fromEntries(
+            (tripConfig.checklistCategories?.gear || []).map(category => [category.value, category.color || 'stone'])
+        );
+
+        let gearItems = [];
+        let editingGearId = null;
+
+        function loadGearItems() {
+            const saved = localStorage.getItem(tripStorageKey('gear_items_v1'));
+            if (saved) {
+                try {
+                    gearItems = JSON.parse(saved);
+                } catch (e) {
+                    gearItems = JSON.parse(JSON.stringify(DEFAULT_GEAR_ITEMS));
+                }
+            } else {
+                gearItems = JSON.parse(JSON.stringify(DEFAULT_GEAR_ITEMS));
+            }
+            renderGearItems();
+        }
+
+        function saveGearItems() {
+            if (window.firebaseDB && window.fbRef && window.fbSet) {
+                window.fbSet(window.fbRef(window.firebaseDB, tripFirebasePath('gear_items')), gearItems);
+            } else {
+                localStorage.setItem(tripStorageKey('gear_items_v1'), JSON.stringify(gearItems));
+            }
+            renderGearItems();
+        }
+
+        function renderGearRow(item) {
+            const color = GEAR_CATEGORY_COLORS[item.category] || "stone";
+            const isBuyDay = (item.note || '').includes('當天');
+            const noteClass = isBuyDay ? 'text-stone-600 font-bold text-emerald-700' : 'text-stone-600';
+            return `
+                <tr class="hover:bg-stone-50 transition-colors cursor-grab active:cursor-grabbing" data-gear-id="${item.id}" draggable="true" ondragstart="handleGearDragStart(event, ${item.id})" ondragend="handleGearDragEnd(event)">
+                    <td class="p-2.5 cursor-pointer" onclick="toggleGearChecked(${item.id})"><input type="checkbox" ${item.checked ? 'checked' : ''} class="checkbox-custom w-4 h-4 text-emerald-600 rounded pointer-events-none"></td>
+                    <td class="p-2.5"><span class="badge-pill bg-${color}-100 text-${color}-800">${item.category}</span></td>
+                    <td class="p-2.5 font-bold">${item.name}</td>
+                    <td class="p-2.5 text-stone-600">${item.qty || '-'}</td>
+                    <td class="p-2.5 ${noteClass}">${item.note || '-'}</td>
+                    <td class="p-2.5 text-right space-x-1 whitespace-nowrap">
+                        <button onclick="openEditGearModal(${item.id})" title="編輯" class="text-stone-400 hover:text-emerald-600 p-1.5 rounded-lg hover:bg-emerald-50 text-xs"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteGearItem(${item.id})" title="刪除" class="text-stone-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 text-xs"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function renderGearCard(item) {
+            const color = GEAR_CATEGORY_COLORS[item.category] || "stone";
+            const isBuyDay = (item.note || '').includes('當天');
+            const noteClass = isBuyDay ? 'font-bold text-emerald-700' : 'text-stone-500';
+            return `
+                <div class="border border-stone-100 rounded-xl p-3 active:cursor-grabbing" data-gear-id="${item.id}" draggable="true" ondragstart="handleGearDragStart(event, ${item.id})" ondragend="handleGearDragEnd(event)">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex items-start gap-2.5 flex-1 min-w-0 cursor-pointer" onclick="toggleGearChecked(${item.id})">
+                            <input type="checkbox" ${item.checked ? 'checked' : ''} class="checkbox-custom w-4 h-4 mt-0.5 text-emerald-600 rounded pointer-events-none shrink-0">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-bold text-sm text-stone-800 break-words">${item.name}</span>
+                                    <span class="badge-pill bg-${color}-100 text-${color}-800 text-[10px] shrink-0">${item.category}</span>
+                                </div>
+                                ${item.qty ? `<div class="text-xs text-stone-500 mt-0.5">${item.qty}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="openEditGearModal(${item.id})" title="編輯" class="text-stone-400 hover:text-emerald-600 p-1.5 rounded-lg hover:bg-emerald-50 text-xs"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteGearItem(${item.id})" title="刪除" class="text-stone-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 text-xs"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </div>
+                    ${item.note && item.note !== '-' ? `<div class="text-xs ${noteClass} mt-1.5 pl-[26px] break-words">${item.note}</div>` : ''}
+                </div>
+            `;
+        }
+
+        function renderGearItems() {
+            const cookingItems = gearItems.filter(i => i.section === 'cooking');
+            const kitchenItems = gearItems.filter(i => i.section === 'kitchen');
+            const emptyRow = `<tr><td colspan="6" class="p-4 text-center text-stone-400 text-xs">尚無項目，請點擊上方「新增裝備項目」</td></tr>`;
+            const emptyCard = `<div class="p-4 text-center text-stone-400 text-xs">尚無項目，請點擊上方「新增裝備項目」</div>`;
+
+            const cookingTbody = document.getElementById('gear-cooking-tbody');
+            const kitchenTbody = document.getElementById('gear-kitchen-tbody');
+            const cookingCards = document.getElementById('gear-cooking-cards');
+            const kitchenCards = document.getElementById('gear-kitchen-cards');
+
+            if (cookingTbody) cookingTbody.innerHTML = cookingItems.length ? cookingItems.map(renderGearRow).join('') : emptyRow;
+            if (kitchenTbody) kitchenTbody.innerHTML = kitchenItems.length ? kitchenItems.map(renderGearRow).join('') : emptyRow;
+            if (cookingCards) cookingCards.innerHTML = cookingItems.length ? cookingItems.map(renderGearCard).join('') : emptyCard;
+            if (kitchenCards) kitchenCards.innerHTML = kitchenItems.length ? kitchenItems.map(renderGearCard).join('') : emptyCard;
+
+            const cookingCount = document.getElementById('gear-cooking-count');
+            const kitchenCount = document.getElementById('gear-kitchen-count');
+            if (cookingCount) cookingCount.innerText = cookingItems.length + ' 項';
+            if (kitchenCount) kitchenCount.innerText = kitchenItems.length + ' 項';
+
+            updateGearProgress();
+            renderShoppingList();
+        }
+
+        // ==========================================
+        // DAY-OF SHOPPING LIST (aggregated from food & gear items marked 當天採買)
+        // ==========================================
+        function renderShoppingList() {
+            const tbody = document.getElementById('shopping-list-tbody');
+            if (!tbody) return;
+
+            const foodBuyItems = foodItems
+                .filter(i => (i.note || '').includes('當天'))
+                .map(i => ({ ...i, source: 'food', sourceLabel: '食材清單' }));
+            const gearBuyItems = gearItems
+                .filter(i => (i.note || '').includes('當天'))
+                .map(i => ({ ...i, source: 'gear', sourceLabel: '營地裝備' }));
+            const combined = [...foodBuyItems, ...gearBuyItems];
+
+            tbody.innerHTML = combined.length ? combined.map(item => {
+                const color = item.source === 'food'
+                    ? (FOOD_CATEGORY_COLORS[item.category] || 'stone')
+                    : (GEAR_CATEGORY_COLORS[item.category] || 'stone');
+                const toggleFn = item.source === 'food' ? 'toggleFoodChecked' : 'toggleGearChecked';
+                const sourceBadge = item.source === 'food' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800';
+                const nameClass = item.checked ? 'font-bold line-through text-stone-400' : 'font-bold';
+                return `
+                    <tr class="hover:bg-stone-50">
+                        <td class="p-2.5 cursor-pointer" onclick="${toggleFn}(${item.id})"><input type="checkbox" ${item.checked ? 'checked' : ''} class="checkbox-custom w-4 h-4 text-emerald-600 rounded pointer-events-none"></td>
+                        <td class="p-2.5 ${nameClass}">${item.name}</td>
+                        <td class="p-2.5"><span class="badge-pill bg-${color}-100 text-${color}-800">${item.category}</span></td>
+                        <td class="p-2.5 text-stone-600">${item.qty || '-'}</td>
+                        <td class="p-2.5"><span class="badge-pill ${sourceBadge}">${item.sourceLabel}</span></td>
+                    </tr>
+                `;
+            }).join('') : `<tr><td colspan="5" class="p-4 text-center text-stone-400 text-xs">目前沒有標示「當天採買」的項目</td></tr>`;
+
+            const total = combined.length;
+            const checkedCount = combined.filter(i => i.checked).length;
+            const percent = total ? Math.round((checkedCount / total) * 100) : 0;
+            const bar = document.getElementById('shopping-progress-bar');
+            const pct = document.getElementById('shopping-progress-percent');
+            if (bar) bar.style.width = percent + '%';
+            if (pct) pct.innerText = percent + '%';
+        }
+
+        function toggleGearChecked(id) {
+            const item = gearItems.find(i => i.id === id);
+            if (item) {
+                item.checked = !item.checked;
+                saveGearItems();
+            }
+        }
+
+        // 手動拖拉排序
+        let draggedGearId = null;
+
+        function handleGearDragStart(e, id) {
+            draggedGearId = id;
+            e.dataTransfer.effectAllowed = 'move';
+            try { e.dataTransfer.setData('text/plain', String(id)); } catch (err) {}
+            e.currentTarget.classList.add('opacity-40');
+        }
+
+        function handleGearDragEnd(e) {
+            e.currentTarget.classList.remove('opacity-40');
+            document.querySelectorAll('.gear-drag-over').forEach(el => el.classList.remove('gear-drag-over', 'bg-emerald-50'));
+            draggedGearId = null;
+        }
+
+        function handleGearTbodyDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const row = e.target.closest('[data-gear-id]');
+            document.querySelectorAll('.gear-drag-over').forEach(el => el.classList.remove('gear-drag-over', 'bg-emerald-50'));
+            if (row && Number(row.dataset.gearId) !== draggedGearId) {
+                row.classList.add('gear-drag-over', 'bg-emerald-50');
+            }
+        }
+
+        function handleGearTbodyDrop(e, section) {
+            e.preventDefault();
+            document.querySelectorAll('.gear-drag-over').forEach(el => el.classList.remove('gear-drag-over', 'bg-emerald-50'));
+            if (draggedGearId === null) return;
+
+            const targetRow = e.target.closest('[data-gear-id]');
+            const targetId = targetRow ? Number(targetRow.dataset.gearId) : null;
+            if (targetId === draggedGearId) { draggedGearId = null; return; }
+
+            const fromIndex = gearItems.findIndex(i => i.id === draggedGearId);
+            if (fromIndex === -1) { draggedGearId = null; return; }
+            const [draggedItem] = gearItems.splice(fromIndex, 1);
+            draggedItem.section = section;
+
+            let toIndex = targetId !== null ? gearItems.findIndex(i => i.id === targetId) : -1;
+
+            if (toIndex === -1) {
+                let lastSectionIndex = -1;
+                gearItems.forEach((it, idx) => { if (it.section === section) lastSectionIndex = idx; });
+                toIndex = lastSectionIndex + 1;
+            }
+            gearItems.splice(toIndex, 0, draggedItem);
+
+            draggedGearId = null;
+            saveGearItems();
+        }
+
+        function getGearCategoryInsertIndex(section, category) {
+            let lastCategoryIndex = -1;
+            let lastSectionIndex = -1;
+            gearItems.forEach((it, idx) => {
+                if (it.section === section) {
+                    lastSectionIndex = idx;
+                    if (it.category === category) lastCategoryIndex = idx;
+                }
+            });
+            return (lastCategoryIndex !== -1 ? lastCategoryIndex : lastSectionIndex) + 1;
+        }
+
+        function openAddGearModal() {
+            editingGearId = null;
+            document.getElementById('gear-modal-title').innerText = "新增裝備項目";
+            document.getElementById('gear-input-section').value = 'cooking';
+            document.getElementById('gear-input-category').value = '烹調器具';
+            document.getElementById('gear-input-name').value = '';
+            document.getElementById('gear-input-qty').value = '';
+            document.getElementById('gear-input-note').value = '';
+            document.getElementById('gear-modal').classList.remove('hidden');
+        }
+
+        function openEditGearModal(id) {
+            const item = gearItems.find(i => i.id === id);
+            if (!item) return;
+            editingGearId = id;
+            document.getElementById('gear-modal-title').innerText = "編輯裝備項目";
+            document.getElementById('gear-input-section').value = item.section;
+            document.getElementById('gear-input-category').value = item.category;
+            document.getElementById('gear-input-name').value = item.name;
+            document.getElementById('gear-input-qty').value = item.qty || '';
+            document.getElementById('gear-input-note').value = item.note || '';
+            document.getElementById('gear-modal').classList.remove('hidden');
+        }
+
+        function closeGearModal() {
+            document.getElementById('gear-modal').classList.add('hidden');
+        }
+
+        function saveGearModalItem() {
+            const section = document.getElementById('gear-input-section').value;
+            const category = document.getElementById('gear-input-category').value;
+            const name = document.getElementById('gear-input-name').value.trim();
+            const qty = document.getElementById('gear-input-qty').value.trim() || '-';
+            const note = document.getElementById('gear-input-note').value.trim() || '-';
+
+            if (!name) {
+                alert("請輸入裝備項目名稱！");
+                return;
+            }
+
+            if (editingGearId !== null) {
+                const item = gearItems.find(i => i.id === editingGearId);
+                if (item) {
+                    item.section = section;
+                    item.category = category;
+                    item.name = name;
+                    item.qty = qty;
+                    item.note = note;
+                }
+            } else {
+                const newItem = {
+                    id: Date.now(),
+                    section, category, name, qty, note,
+                    checked: false
+                };
+                gearItems.splice(getGearCategoryInsertIndex(section, category), 0, newItem);
+            }
+
+            saveGearItems();
+            closeGearModal();
+        }
+
+        function deleteGearItem(id) {
+            if (confirm("確定要刪除這個裝備項目嗎？")) {
+                gearItems = gearItems.filter(i => i.id !== id);
+                saveGearItems();
+            }
+        }
+
+        function resetGearItems() {
+            if (confirm("確定要將裝備清單重設為預設值嗎？")) {
+                gearItems = JSON.parse(JSON.stringify(DEFAULT_GEAR_ITEMS));
+                saveGearItems();
+            }
+        }
+
+        // ==========================================
+        // 分帳小工具 LOGIC (SHARE / SPLIT CALC)
+        // ==========================================
+        let families = [...tripConfig.families];
+        let items = [];
+
+        function saveSplitData() {
+            // 同步至 Firebase
+            if (window.firebaseDB && window.fbRef && window.fbSet) {
+                window.fbSet(window.fbRef(window.firebaseDB, tripFirebasePath('split')), {
+                    families: families,
+                    items: items
+                });
+            } else {
+                localStorage.setItem(tripStorageKey('split_families'), JSON.stringify(families));
+                localStorage.setItem(tripStorageKey('split_items'), JSON.stringify(items));
+            }
+            renderSplitApp();
+        }
+
+        function addFamily() {
+            const input = document.getElementById('familyInput');
+            const name = input.value.trim();
+            if (name && !families.includes(name)) {
+                families.push(name);
+                input.value = '';
+                saveSplitData();
+            }
+        }
+
+        function removeFamily(name) {
+            if (confirm(`確定要移除「${name}」嗎？相關分攤可能需要重新檢查。`)) {
+                families = families.filter(f => f !== name);
+                items = items.map(item => ({
+                    ...item,
+                    splitWith: item.splitWith.filter(f => f !== name)
+                })).filter(item => item.payer !== name);
+                saveSplitData();
+            }
+        }
+
+        function saveItem() {
+            const editIndex = parseInt(document.getElementById('editIndex').value, 10);
+            const name = document.getElementById('itemName').value.trim();
+            const amount = parseFloat(document.getElementById('itemAmount').value);
+            const payer = document.getElementById('payerSelect').value;
+            
+            const checkboxes = document.querySelectorAll('#splitGroup input[type="checkbox"]:checked');
+            const splitWith = Array.from(checkboxes).map(cb => cb.value);
+
+            if (!name || isNaN(amount) || amount <= 0 || !payer || splitWith.length === 0) {
+                alert('請填寫完整且正確的品項名稱、金額、墊付者及至少一位分攤對象！');
+                return;
+            }
+
+            const payload = { name, amount, payer, splitWith };
+
+            if (editIndex >= 0) {
+                items[editIndex] = payload;
+            } else {
+                items.push(payload);
+            }
+
+            resetForm();
+            saveSplitData();
+        }
+
+        function editItem(index) {
+            const item = items[index];
+            document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-pen-to-square text-amber-500 mr-2"></i> 編輯消費項目';
+            document.getElementById('editIndex').value = index;
+            document.getElementById('itemName').value = item.name;
+            document.getElementById('itemAmount').value = item.amount;
+            document.getElementById('payerSelect').value = item.payer;
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+
+            document.querySelectorAll('#splitGroup input[type="checkbox"]').forEach(cb => {
+                cb.checked = item.splitWith.includes(cb.value);
+            });
+        }
+
+        function deleteItem(index) {
+            if (confirm('確定刪除此消費項目？')) {
+                items.splice(index, 1);
+                saveSplitData();
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-receipt text-amber-500 mr-2"></i> 新增消費項目';
+            document.getElementById('editIndex').value = -1;
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemAmount').value = '';
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+            document.querySelectorAll('#splitGroup input[type="checkbox"]').forEach(cb => cb.checked = true);
+        }
+
+        function calculateSettlements(balances) {
+            let debtors = [];
+            let creditors = [];
+
+            for (const [family, amount] of Object.entries(balances)) {
+                const rounded = Math.round(amount);
+                if (rounded < -0.01) debtors.push({ family, amount: -rounded });
+                else if (rounded > 0.01) creditors.push({ family, amount: rounded });
+            }
+
+            debtors.sort((a, b) => b.amount - a.amount);
+            creditors.sort((a, b) => b.amount - a.amount);
+
+            const transactions = [];
+            let i = 0, j = 0;
+
+            while (i < debtors.length && j < creditors.length) {
+                const settleAmount = Math.min(debtors[i].amount, creditors[j].amount);
+                transactions.push({
+                    from: debtors[i].family,
+                    to: creditors[j].family,
+                    amount: settleAmount
+                });
+
+                debtors[i].amount -= settleAmount;
+                creditors[j].amount -= settleAmount;
+
+                if (debtors[i].amount < 1) i++;
+                if (creditors[j].amount < 1) j++;
+            }
+
+            return transactions;
+        }
+
+        function renderSplitApp() {
+            // 家庭標籤
+            const familyTags = document.getElementById('familyTags');
+            if (familyTags) {
+                familyTags.innerHTML = families.map(f => `
+                    <span class="inline-flex items-center gap-1.5 bg-stone-100 text-stone-700 px-3 py-1 rounded-lg text-xs font-bold border border-stone-200">
+                        ${f} <button onclick="removeFamily('${f}')" class="text-stone-400 hover:text-rose-600 font-bold ml-1">✕</button>
+                    </span>
+                `).join('');
+            }
+
+            // 付款下拉選單
+            const payerSelect = document.getElementById('payerSelect');
+            if (payerSelect) {
+                payerSelect.innerHTML = families.map(f => `<option value="${f}">${f}</option>`).join('');
+            }
+
+            // 分攤 Checkboxes
+            const splitGroup = document.getElementById('splitGroup');
+            if (splitGroup) {
+                splitGroup.innerHTML = families.map(f => `
+                    <label class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-stone-700 cursor-pointer bg-stone-50 px-2.5 py-1.5 rounded-lg border border-stone-200">
+                        <input type="checkbox" value="${f}" checked class="rounded text-emerald-600"> ${f}
+                    </label>
+                `).join('');
+            }
+
+            // 明細清單
+            const itemsTableBody = document.getElementById('itemsTableBody');
+            if (itemsTableBody) {
+                if (items.length === 0) {
+                    itemsTableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-stone-400 text-xs">尚無任何消費項目，請於上方表單新增！</td></tr>`;
+                } else {
+                    itemsTableBody.innerHTML = items.map((item, idx) => `
+                        <tr class="hover:bg-stone-50">
+                            <td class="p-2.5 font-bold text-stone-800">${item.name}</td>
+                            <td class="p-2.5 text-emerald-700 font-bold">$${Math.round(item.amount).toLocaleString()}</td>
+                            <td class="p-2.5"><span class="badge-pill bg-blue-100 text-blue-800">${item.payer}</span></td>
+                            <td class="p-2.5 text-stone-500 text-xs">${(item.splitWith || []).join(', ')}</td>
+                            <td class="p-2.5 text-right space-x-1">
+                                <button class="px-2 py-1 text-xs bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg transition-all" onclick="editItem(${idx})">編輯</button>
+                                <button class="px-2 py-1 text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition-all" onclick="deleteItem(${idx})">刪除</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            }
+
+            // 1. 先計算各家墊付總額與群組分攤總計
+            const paid = {};
+            const share = {};
+            families.forEach(f => { paid[f] = 0; share[f] = 0; });
+
+            // 依「分攤群組」與「墊付者」將各品項加總
+            const groupTotals = {};
+
+            items.forEach(item => {
+                const amt = Math.round(item.amount);
+                if (paid[item.payer] !== undefined) {
+                    paid[item.payer] += amt;
+                }
+
+                const splitWithList = (item.splitWith || []).slice().sort();
+                if (splitWithList.length === 0) return;
+
+                const groupKey = `${item.payer}__${splitWithList.join('|')}`;
+                if (!groupTotals[groupKey]) {
+                    groupTotals[groupKey] = {
+                        payer: item.payer,
+                        splitWith: splitWithList,
+                        totalAmount: 0
+                    };
+                }
+                groupTotals[groupKey].totalAmount += amt;
+            });
+
+            // 2. 針對總計後的金額進行分除；無法整除時，依總墊付金額由大到小排序，
+            //    墊付金額最多的人分攤金額最小，墊付金額最少的人分攤金額最大
+            Object.values(groupTotals).forEach(group => {
+                const totalAmt = group.totalAmount;
+                const n = group.splitWith.length;
+                if (n === 0 || totalAmt === 0) return;
+
+                const baseShare = Math.floor(totalAmt / n);
+                const remainder = totalAmt % n;
+
+                const sortedByPaidAsc = group.splitWith.slice().sort((a, b) => (paid[a] || 0) - (paid[b] || 0));
+
+                sortedByPaidAsc.forEach((member, idx) => {
+                    if (share[member] !== undefined) {
+                        share[member] += baseShare + (idx < remainder ? 1 : 0);
+                    }
+                });
+            });
+
+            // 3. 渲染各家收支總結
+            const netBalances = {};
+            const summaryTableBody = document.getElementById('summaryTableBody');
+            if (summaryTableBody) {
+                summaryTableBody.innerHTML = families.map(f => {
+                    const net = paid[f] - share[f];
+                    netBalances[f] = net;
+                    const badgeClass = net > 0 ? 'bg-emerald-100 text-emerald-800' : (net < 0 ? 'bg-rose-100 text-rose-800' : 'bg-stone-100 text-stone-600');
+                    const netText = net > 0 ? `應收 +$${net.toLocaleString()}` : (net < 0 ? `應付 -$${Math.abs(net).toLocaleString()}` : '$0');
+                    
+                    return `
+                        <tr class="hover:bg-stone-50">
+                            <td class="p-2.5 font-bold text-stone-800">${f}</td>
+                            <td class="p-2.5 text-stone-600">$${paid[f].toLocaleString()}</td>
+                            <td class="p-2.5 text-stone-600">$${share[f].toLocaleString()}</td>
+                            <td class="p-2.5"><span class="badge-pill font-bold ${badgeClass}">${netText}</span></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // 4. 渲染最終結算方案
+            const settlements = calculateSettlements(netBalances);
+            const settlementList = document.getElementById('settlementList');
+            if (settlementList) {
+                if (settlements.length === 0) {
+                    settlementList.innerHTML = `<div class="p-4 bg-stone-50 rounded-xl text-center text-xs text-stone-500">🎉 目前各家帳目已平衡，無須轉帳。</div>`;
+                } else {
+                    settlementList.innerHTML = settlements.map(s => `
+                        <div class="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3.5 flex justify-between items-center text-xs sm:text-sm">
+                            <span class="text-emerald-950 font-medium"><i class="fa-solid fa-credit-card mr-1.5 text-emerald-600"></i> <strong>${s.from}</strong> 應支付給 <strong>${s.to}</strong></span>
+                            <span class="text-emerald-800 font-black text-sm sm:text-base">$${s.amount.toLocaleString()} 元</span>
+                        </div>
+                    `).join('');
+                }
+            }
+        }
+        // Initialize on DOM loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            applyTripConfig();
+            loadPersonalItems();
+            loadFoodItems();
+            loadGearItems();
+            renderSplitApp();
+        });
+    </script>
+</body>
+</html>
