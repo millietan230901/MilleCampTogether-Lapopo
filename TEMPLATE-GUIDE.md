@@ -32,7 +32,7 @@
 
 ## 行程
 
-`scheduleTitle`、`scheduleReferencesTitle` 和 `scheduleDays` 控制行程。每天可設定 `label`、`title`、`references`、`events`：
+`scheduleReferencesTitle` 和 `scheduleDays` 控制行程內容。每天可設定 `label`、`title`、`references`、`events`：
 
 ```js
 {
@@ -85,6 +85,10 @@
 同一清單中的 `id` 請保持唯一。勾選、編輯與清單同步功能會沿用網頁既有的操作方式。
 
 `checklistCategories.personal`、`.food`、`.gear` 設定新增項目的分類選單；每筆可用 `{ value, label }`，食材/裝備分類也可加上 Tailwind 色彩名稱 `color`。`checklistGroups.food` 和 `.gear` 設定分區標題與說明，每筆用 `{ id, title, detail }`。分區 `id` 是網頁內部代碼，請沿用範本的 `cold`、`ambient`、`cooking`、`kitchen`，只修改顯示文字。`checklistGroups.shoppingTitle`、`shoppingDescription` 可調整採買區標題與說明。
+
+個人用品頁可透過「管理分類」修改或新增分類；分類設定與個人用品清單一樣，只儲存在使用者目前的瀏覽器中。
+
+已儲存到瀏覽器的個人用品清單不會自動被設定檔中的預設用品覆蓋；若要載入後續新增的預設用品，請使用清單上的「重設」。重設會以設定檔預設清單取代目前這台裝置的用品清單。
 
 ## 圖片替換
 

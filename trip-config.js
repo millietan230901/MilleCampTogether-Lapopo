@@ -273,12 +273,11 @@ window.TRIP_CONFIG = {
             { id: 26, category: "設備", name: "大人水壺", qty: "1 個", checked: false },
             { id: 27, category: "設備", name: "大人餐具", qty: "2 組", checked: false },
             { id: 28, category: "設備", name: "露營椅", qty: "2 個", checked: false },
-             { id: 28, category: "食物", name: "泡麵", qty: "2 個", checked: false },
-             { id: 28, category: "食物", name: "飲料", qty: "2 個", checked: false },
-
-              { id: 28, category: "食物", name: "洋芋片", qty: "1 個", checked: false },
-                           { id: 28, category: "食物", name: "保久乳", qty: "1 個", checked: false },
-               { id: 28, category: "食物", name: "小餅乾", qty: "1 個", checked: false }
+            { id: 29, category: "食物", name: "泡麵", qty: "2 個", checked: false },
+            { id: 30, category: "食物", name: "飲料", qty: "2 個", checked: false },
+            { id: 31, category: "食物", name: "洋芋片", qty: "1 個", checked: false },
+            { id: 32, category: "食物", name: "保久乳", qty: "1 個", checked: false },
+            { id: 33, category: "食物", name: "小餅乾", qty: "1 個", checked: false }
         
         ],
         food: [],
@@ -291,7 +290,8 @@ window.TRIP_CONFIG = {
             { value: "衣物", label: "衣物鞋履" },
             { value: "玩樂", label: "玩樂休閒" },
             { value: "設備", label: "隨身設備" },
-            { value: "藥品", label: "常備藥品" }
+            { value: "藥品", label: "常備藥品" },
+            { value: "食物", label: "零食飲品" }
         ],
         food: [
             { value: "飲品", label: "飲品", color: "amber" },

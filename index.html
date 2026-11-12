@@ -1533,13 +1533,18 @@
                             category.label.trim()
                         )
                         : [];
-                    personalCategories = savedCategories.length
-                        ? savedCategories
-                        : JSON.parse(JSON.stringify(DEFAULT_PERSONAL_CATEGORIES));
+                    personalCategories = savedCategories;
                 } catch (e) {
-                    personalCategories = JSON.parse(JSON.stringify(DEFAULT_PERSONAL_CATEGORIES));
+                    personalCategories = [];
                 }
-            } else {
+            }
+            const existingValues = new Set(personalCategories.map(category => category.value));
+            DEFAULT_PERSONAL_CATEGORIES.forEach(category => {
+                if (!existingValues.has(category.value)) {
+                    personalCategories.push({ ...category });
+                }
+            });
+            if (personalCategories.length === 0) {
                 personalCategories = JSON.parse(JSON.stringify(DEFAULT_PERSONAL_CATEGORIES));
             }
             renderPersonalCategoryOptions();
