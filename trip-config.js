@@ -120,7 +120,7 @@ window.TRIP_CONFIG = {
                 },
                 { 
                     time: "20:00-20:30", 
-                    title: "營火考棉花糖+聖誕之夜!", 
+                    title: "營火烤棉花糖+聖誕之夜!", 
                     detail: "邊吃著棉花糖，進行聖誕交換禮物，帶領孩子們玩螢光棒。",
                     imageUrl: "image/day1_6.jpg"
                 },
@@ -252,13 +252,11 @@ window.TRIP_CONFIG = {
             { id: 6, category: "保養", name: "蚊蟲叮咬舒緩膏", qty: "1 個", checked: false },
             { id: 7, category: "保養", name: "乳液", qty: "1 個", checked: false },
             { id: 8, category: "保養", name: "洗面乳", qty: "1 罐", checked: false },
-                        { id: 9, category: "玩樂", name: "聖誕禮物", qty: "1 個", checked: false },
-                        { id:10, category: "玩樂", name: "禮物道具毛線", qty: "1 個", checked: false },
-{ id: 12, category: "玩樂", name: "螢光棒", qty: "1 個", checked: false },
-{ id: 12, category: "玩樂", name: "球", qty: "1 個", checked: false },
+            { id: 9, category: "玩樂", name: "聖誕禮物", qty: "1 個", checked: false },
+            { id:10, category: "玩樂", name: "禮物道具毛線", qty: "1 個", checked: false },
+            { id: 12, category: "玩樂", name: "螢光棒", qty: "1 個", checked: false },
+            {id: 12, category: "玩樂", name: "小足球", qty: "1 個", checked: false },
             { id: 12, category: "玩樂", name: "泡泡水", qty: "1 個", checked: false },
-        
-                        { id:10, category: "玩樂", name: "泳衣(視天氣)", qty: "1 個", checked: false },
             { id: 13, category: "衣物", name: "拖鞋", qty: "2 雙", checked: false },
             { id: 14, category: "衣物", name: "小孩衣服", qty: "4 套", checked: false },
             { id: 15, category: "衣物", name: "大人衣服", qty: "2 套", checked: false },
@@ -273,7 +271,8 @@ window.TRIP_CONFIG = {
             { id: 24, category: "設備", name: "充電器", qty: "1 個", checked: false },
             { id: 25, category: "設備", name: "雨傘", qty: "1 個", checked: false },
             { id: 26, category: "設備", name: "大人水壺", qty: "1 個", checked: false },
-            { id: 27, category: "設備", name: "大人餐具", qty: "2 組", checked: false }
+            { id: 27, category: "設備", name: "大人餐具", qty: "2 組", checked: false },
+            { id: 28, category: "設備", name: "露營椅", qty: "2 個", checked: false }
         ],
         food: [],
         gear: []

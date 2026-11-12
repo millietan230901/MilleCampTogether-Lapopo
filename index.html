@@ -345,6 +345,9 @@
                         <p class="text-xs text-stone-500">此區為個人專屬紀錄，資料自動存於各自身機瀏覽器中。</p>
                     </div>
                     <div class="flex items-center space-x-2">
+                        <button onclick="openPersonalCategoryModal()" class="bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold px-3 py-1.5 rounded-xl text-xs sm:text-sm flex items-center transition-all border border-stone-200">
+                            <i class="fa-solid fa-tags mr-1.5"></i> 管理分類
+                        </button>
                         <button onclick="openAddItemModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs sm:text-sm flex items-center shadow-sm transition-all">
                             <i class="fa-solid fa-plus mr-1.5"></i> 新增項目
                         </button>
@@ -714,6 +717,26 @@
             <div class="flex justify-end space-x-2 mt-6">
                 <button onclick="closeModal()" class="px-4 py-2 text-stone-500 hover:text-stone-700 text-sm font-medium">取消</button>
                 <button onclick="savePersonalModalItem()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all">儲存項目</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Managing Personal Item Categories -->
+    <div id="personal-category-modal" class="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-stone-200 max-h-[85vh] overflow-y-auto">
+            <h3 class="font-bold text-lg text-forest mb-1">管理用品分類</h3>
+            <p class="text-xs text-stone-500 mb-4">修改分類名稱，或新增分類；變更只會儲存在這台裝置。</p>
+            <div id="personal-category-editor-list" class="space-y-2"></div>
+            <div class="mt-4 pt-4 border-t border-stone-200">
+                <label for="personal-category-new-name" class="block text-xs font-bold text-stone-600 mb-1">新增分類</label>
+                <div class="flex gap-2">
+                    <input type="text" id="personal-category-new-name" maxlength="30" placeholder="輸入分類名稱" class="min-w-0 flex-1 border border-stone-300 rounded-xl p-2.5 bg-stone-50 focus:outline-emerald-600 text-sm text-stone-800">
+                    <button onclick="addPersonalCategoryDraft()" class="bg-stone-100 hover:bg-stone-200 text-stone-700 px-3 rounded-xl text-sm font-bold border border-stone-200">新增</button>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button onclick="closePersonalCategoryModal()" class="px-4 py-2 text-stone-500 hover:text-stone-700 text-sm font-medium">取消</button>
+                <button onclick="savePersonalCategories()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all">儲存分類</button>
             </div>
         </div>
     </div>
@@ -1485,9 +1508,57 @@
         const DEFAULT_PERSONAL_ITEMS = Array.isArray(tripConfig.checklists?.personal)
             ? tripConfig.checklists.personal
             : [];
+        const DEFAULT_PERSONAL_CATEGORIES = Array.isArray(tripConfig.checklistCategories?.personal)
+            ? tripConfig.checklistCategories.personal
+                .filter(category => category && typeof category.value === 'string' && typeof category.label === 'string')
+                .map(category => ({ value: category.value, label: category.label }))
+            : [];
 
         let personalItems = [];
+        let personalCategories = [];
+        let editingPersonalCategories = [];
         let editingItemId = null;
+
+        function loadPersonalCategories() {
+            const saved = localStorage.getItem(tripStorageKey('personal_categories_v1'));
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    const savedCategories = Array.isArray(parsed)
+                        ? parsed.filter(category =>
+                            category &&
+                            typeof category.value === 'string' &&
+                            typeof category.label === 'string' &&
+                            category.value.trim() &&
+                            category.label.trim()
+                        )
+                        : [];
+                    personalCategories = savedCategories.length
+                        ? savedCategories
+                        : JSON.parse(JSON.stringify(DEFAULT_PERSONAL_CATEGORIES));
+                } catch (e) {
+                    personalCategories = JSON.parse(JSON.stringify(DEFAULT_PERSONAL_CATEGORIES));
+                }
+            } else {
+                personalCategories = JSON.parse(JSON.stringify(DEFAULT_PERSONAL_CATEGORIES));
+            }
+            renderPersonalCategoryOptions();
+        }
+
+        function renderPersonalCategoryOptions() {
+            const select = document.getElementById('input-category');
+            const selectedValue = select.value;
+            select.replaceChildren();
+            personalCategories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.value;
+                option.textContent = category.label;
+                select.appendChild(option);
+            });
+            if (personalCategories.some(category => category.value === selectedValue)) {
+                select.value = selectedValue;
+            }
+        }
 
         function loadPersonalItems() {
             const saved = localStorage.getItem(tripStorageKey('personal_items_v2'));
@@ -1528,16 +1599,17 @@
                 groups[cat].push(item);
             });
 
-            const displayCategories = ["衛生清潔", "保養", "衣物", "玩樂", "藥品", "設備"];
+            const displayCategories = personalCategories.map(category => category.value);
             Object.keys(groups).forEach(cat => {
                 if (!displayCategories.includes(cat)) displayCategories.push(cat);
             });
 
             displayCategories.forEach(catKey => {
-                const itemsInCat = groups[catKey];
-                if (!itemsInCat || itemsInCat.length === 0) return;
+                const itemsInCat = groups[catKey] || [];
 
-                const meta = CATEGORY_MAP[catKey] || { icon: "fa-box", color: "stone", title: catKey };
+                const meta = CATEGORY_MAP[catKey] || { icon: "fa-box", color: "stone" };
+                const category = personalCategories.find(entry => entry.value === catKey);
+                const categoryTitle = category ? category.label : catKey;
                 
                 const card = document.createElement('div');
                 card.className = "bg-white rounded-2xl p-5 border border-stone-200 shadow-sm";
@@ -1563,17 +1635,32 @@
                     </div>
                 `).join('');
 
-                card.innerHTML = `
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="font-bold text-base sm:text-lg text-forest flex items-center">
-                            <i class="fa-solid ${meta.icon} text-${meta.color}-500 mr-2"></i> ${meta.title}
-                        </h3>
-                        <span class="badge-pill bg-${meta.color}-100 text-${meta.color}-800">${itemsInCat.length} 項</span>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                        ${itemsHtml}
-                    </div>
-                `;
+                const header = document.createElement('div');
+                header.className = 'flex justify-between items-center mb-3';
+                const title = document.createElement('h3');
+                title.className = 'font-bold text-base sm:text-lg text-forest flex items-center';
+                const icon = document.createElement('i');
+                icon.className = `fa-solid ${meta.icon} text-${meta.color}-500 mr-2`;
+                title.append(icon, document.createTextNode(categoryTitle));
+                const badge = document.createElement('span');
+                badge.className = `badge-pill bg-${meta.color}-100 text-${meta.color}-800`;
+                badge.textContent = `${itemsInCat.length} 項`;
+                header.append(title, badge);
+                const itemGrid = document.createElement('div');
+                itemGrid.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5';
+                if (itemsInCat.length) {
+                    itemGrid.innerHTML = itemsHtml;
+                } else {
+                    const emptyMessage = document.createElement('p');
+                    emptyMessage.className = 'text-xs text-stone-400';
+                    emptyMessage.textContent = '此分類尚無用品。';
+                    const addButton = document.createElement('button');
+                    addButton.className = 'text-emerald-700 hover:text-emerald-800 text-xs font-bold';
+                    addButton.textContent = '新增用品';
+                    addButton.addEventListener('click', () => openAddItemModal(catKey));
+                    itemGrid.append(emptyMessage, addButton);
+                }
+                card.append(header, itemGrid);
 
                 container.appendChild(card);
             });
@@ -1605,9 +1692,11 @@
             }
         }
 
-        function openAddItemModal() {
+        function openAddItemModal(categoryValue = '') {
             editingItemId = null;
             document.getElementById('modal-title').innerText = "新增個人用品";
+            renderPersonalCategoryOptions();
+            if (categoryValue) document.getElementById('input-category').value = categoryValue;
             document.getElementById('input-name').value = '';
             document.getElementById('input-qty').value = '1 個';
             document.getElementById('item-modal').classList.remove('hidden');
@@ -1667,6 +1756,90 @@
                 savePersonalToStorage();
                 renderPersonalItems();
             }
+        }
+
+        function renderPersonalCategoryEditor() {
+            const list = document.getElementById('personal-category-editor-list');
+            list.replaceChildren();
+            editingPersonalCategories.forEach((category, index) => {
+                const label = document.createElement('label');
+                label.className = 'block text-xs font-bold text-stone-600';
+                label.textContent = `分類 ${index + 1}`;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.maxLength = 30;
+                input.value = category.label;
+                input.dataset.categoryIndex = index;
+                input.setAttribute('aria-label', `分類 ${index + 1} 名稱`);
+                input.className = 'mt-1 w-full border border-stone-300 rounded-xl p-2.5 bg-stone-50 focus:outline-emerald-600 text-sm text-stone-800';
+                label.appendChild(input);
+                list.appendChild(label);
+            });
+        }
+
+        function openPersonalCategoryModal() {
+            editingPersonalCategories = personalCategories.map(category => ({ ...category }));
+            document.getElementById('personal-category-new-name').value = '';
+            renderPersonalCategoryEditor();
+            document.getElementById('personal-category-modal').classList.remove('hidden');
+        }
+
+        function closePersonalCategoryModal() {
+            document.getElementById('personal-category-modal').classList.add('hidden');
+        }
+
+        function addPersonalCategoryDraft() {
+            const input = document.getElementById('personal-category-new-name');
+            const label = input.value.trim();
+            if (!label) {
+                alert('請輸入分類名稱。');
+                input.focus();
+                return;
+            }
+
+            document.querySelectorAll('#personal-category-editor-list input').forEach(categoryInput => {
+                const index = Number(categoryInput.dataset.categoryIndex);
+                editingPersonalCategories[index].label = categoryInput.value.trim();
+            });
+            if (editingPersonalCategories.some(category => category.label.toLowerCase() === label.toLowerCase())) {
+                alert('已有相同名稱的分類，請使用其他名稱。');
+                input.focus();
+                return;
+            }
+
+            let value = `personal-custom-${Date.now()}`;
+            while (editingPersonalCategories.some(category => category.value === value)) {
+                value += '-1';
+            }
+            editingPersonalCategories.push({ value, label });
+            input.value = '';
+            renderPersonalCategoryEditor();
+        }
+
+        function savePersonalCategories() {
+            document.querySelectorAll('#personal-category-editor-list input').forEach(categoryInput => {
+                const index = Number(categoryInput.dataset.categoryIndex);
+                editingPersonalCategories[index].label = categoryInput.value.trim();
+            });
+            const labels = editingPersonalCategories.map(category => category.label);
+            if (labels.some(label => !label)) {
+                alert('分類名稱不可空白。');
+                return;
+            }
+            if (new Set(labels.map(label => label.toLowerCase())).size !== labels.length) {
+                alert('分類名稱不可重複。');
+                return;
+            }
+            if (editingPersonalCategories.length === 0) {
+                alert('至少需要保留一個分類。');
+                return;
+            }
+
+            personalCategories = editingPersonalCategories.map(category => ({ ...category }));
+            localStorage.setItem(tripStorageKey('personal_categories_v1'), JSON.stringify(personalCategories));
+            renderPersonalCategoryOptions();
+            renderPersonalItems();
+            closePersonalCategoryModal();
         }
 
         function updatePersonalProgress() {
@@ -2535,6 +2708,7 @@
         // Initialize on DOM loaded
         document.addEventListener('DOMContentLoaded', () => {
             applyTripConfig();
+            loadPersonalCategories();
             loadPersonalItems();
             loadFoodItems();
             loadGearItems();
