@@ -1384,8 +1384,8 @@
             document.querySelector('[data-trip-venue-link-label]').textContent = tripConfig.venueWebsiteLabel || '住宿地點官網';
             document.querySelector('[data-trip-room-link-label]').textContent = tripConfig.roomInfoLabel || '房型介紹';
             document.querySelector('[data-trip-dinner-label]').textContent = tripConfig.dinnerLabel || '';
-            document.querySelector('[data-trip-footer]').textContent =
-                `🏕️ ${tripConfig.dateText} ${tripConfig.venue} </br> © 2026 Copyright - Millie Tan `;
+            document.querySelector('[data-trip-footer]').innerHTML =
+                `🏕️ ${tripConfig.dateText} ${tripConfig.venue} <br> © 2026 Millie Tan `;
 
             const images = tripConfig.images || {};
             applyTripImage('hero', images.hero || tripConfig.heroImage, tripConfig.venue);
