@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>旅程資訊</title>
+    <!-- App Icon 與 PWA 設定 -->
+    <link rel="icon" href="image/logo2.png" type="image/png">
+    <link rel="apple-touch-icon" href="image/logo2.png">
+    
+    <!-- 啟用手機版全螢幕 App 模式 (隱藏網址列) -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <!-- 設定 iOS 狀態列樣式與預設 App 名稱 -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="旅程資訊">
     <script src="trip-config.js"></script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -136,7 +147,7 @@
                 旅程標題
             </h1>
             <p class="text-amber-200 text-sm md:text-base font-medium drop-shadow">
-                📅 預計日期：<span data-trip-date></span> | 📍 <span data-trip-location></span>
+                📅 日期：<span data-trip-date></span> | 📍 <span data-trip-location></span>
             </p>
             
             <!-- Quick Info Badges -->
@@ -1374,7 +1385,7 @@
             document.querySelector('[data-trip-room-link-label]').textContent = tripConfig.roomInfoLabel || '房型介紹';
             document.querySelector('[data-trip-dinner-label]').textContent = tripConfig.dinnerLabel || '';
             document.querySelector('[data-trip-footer]').textContent =
-                `🏕️ ${tripConfig.dateText} ${tripConfig.venue} • 祝大家玩得超盡興！`;
+                `🏕️ ${tripConfig.dateText} ${tripConfig.venue} </br> © 2026 Copyright - Millie Tan `;
 
             const images = tripConfig.images || {};
             applyTripImage('hero', images.hero || tripConfig.heroImage, tripConfig.venue);
