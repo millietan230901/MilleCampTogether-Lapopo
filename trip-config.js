@@ -105,7 +105,7 @@ window.TRIP_CONFIG = {
                 { 
                     time: "15:00", 
                     title: "LAPOPO 拉波波村入住", 
-                    detail: "進村放行李，於草皮區享用營區下午茶、小孩們吹泡泡、踢球。",
+                    detail: "(詢問哪兩間有消毒鍋，別進錯帳) 進村放行李，於草皮區、小孩們吹泡泡、踢球。",
                     mapUrl: "https://www.google.com/maps/search/?api=1&query=LAPOPO%20%E6%8B%89%E6%B3%A2%E6%B3%A2%E6%9D%91%20%E5%9F%BA%E9%9A%86",
                     imageUrl: "image/day1_4.jpg"
                 },
@@ -115,7 +115,6 @@ window.TRIP_CONFIG = {
                     mealType: "dinner",
                     backupRestaurants: [],
                     detail: "一帳一鍋、自助美食與辣味手抓海鮮。",
-                    mapUrl: "https://www.google.com/maps/search/?api=1&query=LAPOPO%20%E6%8B%89%E6%B3%A2%E6%B3%A2%E6%9D%91%20%E5%9F%BA%E9%9A%86",
                     imageUrl: "image/day1_5.jpg"
                 },
                 { 
