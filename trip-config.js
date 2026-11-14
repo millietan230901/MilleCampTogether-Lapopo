@@ -78,15 +78,16 @@ window.TRIP_CONFIG = {
                 },
                 { 
                     time: "11:50–12:45", 
-                    title: "暖暖小林湯包麵食館 (午餐)", 
+                    title: "(午餐)十二堂", 
                     mealType: "lunch",
                     backupRestaurants: [
+                        { name: "暖暖小林湯包麵食館", mapUrl: "https://www.google.com/maps/search/?api=1&query=%E6%9A%96%E6%9A%96%E5%B0%8F%E6%9E%97%E6%B9%AF%E5%8C%85%E9%BA%B5%E9%A3%9F%E9%A4%A8"    },
                         { name: "金龍肉焿", mapUrl: "https://www.google.com/maps/search/?api=1&query=%E9%87%91%E9%BE%8D%E8%82%89%E7%84%84" },
                         { name: "天一香肉焿順", mapUrl: "https://www.google.com/maps/search/?api=1&query=%E5%A4%A9%E4%B8%80%E9%A6%99%E8%82%89%E7%84%84%E9%A0%86" },
                         { name: "多利創意漢堡", mapUrl: "https://www.google.com/maps/search/?api=1&query=%E5%A4%9A%E5%88%A9%E5%89%B5%E6%84%8F%E6%BC%A2%E5%A0%A1" }
                     ],
                     detail: "前往暖暖在地人氣麵食館享用午餐。如人多無位，則買至車上享用",
-                    mapUrl: "https://www.google.com/maps/search/?api=1&query=%E6%9A%96%E6%9A%96%E5%B0%8F%E6%9E%97%E6%B9%AF%E5%8C%85%E9%BA%B5%E9%A3%9F%E9%A4%A8",
+                    mapUrl: "https://maps.app.goo.gl/3Nu4rxcTB4eSmczT7?g_st=ic",
                     imageUrl: "image/day1_2.jpg"
                 },
                 { 
