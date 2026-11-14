@@ -101,15 +101,21 @@ window.TRIP_CONFIG = {
                     time: "13:20–14:30", 
                     title: "車上午睡與移動", 
                     detail: "開往拉波波村。提早抵達後停在樹蔭下維持冷氣，午睡。",
+                    mapUrl: "https://www.google.com/maps/search/?api=1&query=LAPOPO%20%E6%8B%89%E6%B3%A2%E6%B3%A2%E6%9D%91%20%E5%9F%BA%E9%9A%86",
                     imageUrl: "image/day1_3.jpg"
                 },
                 { 
                     time: "15:00", 
                     title: "LAPOPO 拉波波村入住", 
-                    detail: "(詢問哪兩間有消毒鍋，別進錯帳) 進村放行李，於草皮區、小孩們吹泡泡、踢球。",
-                    mapUrl: "https://www.google.com/maps/search/?api=1&query=LAPOPO%20%E6%8B%89%E6%B3%A2%E6%B3%A2%E6%9D%91%20%E5%9F%BA%E9%9A%86",
+                    detail: "(詢問哪兩間有消毒鍋，別進錯帳) 進村放行李",
                     imageUrl: "image/day1_4.jpg"
                 },
+                { 
+                    time: "15:00-18:00", 
+                    title: "聖誕交換禮物，玩飛盤/踢球/吹泡泡", 
+                    detail: "邊吃著棉花糖，進行聖誕交換禮物，帶領孩子們玩螢光棒。"
+                    
+                }
                 { 
                     time: "18:00-20:00", 
                     title: "豪華晚餐", 
@@ -120,8 +126,8 @@ window.TRIP_CONFIG = {
                 },
                 { 
                     time: "20:00-20:30", 
-                    title: "營火烤棉花糖+聖誕之夜!", 
-                    detail: "邊吃著棉花糖，進行聖誕交換禮物，帶領孩子們玩螢光棒。",
+                    title: "營火烤棉花糖+螢光棒!", 
+                    detail: "邊吃著棉花糖，孩子們玩螢光棒。",
                     imageUrl: "image/day1_6.jpg"
                 },
                                 { 
