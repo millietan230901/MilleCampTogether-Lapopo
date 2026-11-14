@@ -20,7 +20,7 @@
     <!-- 設定 iOS 狀態列樣式與預設 App 名稱 -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Lapopo聖誕露營">
-    <script src="trip-config.js"></script>
+<script src="trip-config.js"></script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -90,6 +90,24 @@
 
     <!-- Firebase Realtime Database Scripts (Modular via script type=module) -->
     <script type="module">
+            // === 版本控制與強制刷新機制 ===
+const CURRENT_APP_VERSION = "2611.13.01"; // 每次 GitHub 有重大更新，你就改這個字串 (例如 v3, v4)
+
+// 檢查本地儲存的版本是否與現在的程式碼版本相符
+const savedVersion = localStorage.getItem('app_version');
+
+if (savedVersion !== CURRENT_APP_VERSION) {
+    // 發現版本不同，代表有更新。更新本地版本紀錄。
+    localStorage.setItem('app_version', CURRENT_APP_VERSION);
+    
+    console.log("發現新版本，正在強制刷新...");
+    
+    // 強制瀏覽器從伺服器(GitHub)重新載入，而不是從快取載入
+    // 使用 true 參數可以強制略過快取 (部分現代瀏覽器適用)
+    window.location.reload(true); 
+}
+// ==================================
+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
