@@ -110,12 +110,7 @@ window.TRIP_CONFIG = {
                     detail: "(詢問哪兩間有消毒鍋，別進錯帳) 進村放行李",
                     imageUrl: "image/day1_4.jpg"
                 },
-                { 
-                    time: "15:00-18:00", 
-                    title: "聖誕交換禮物，玩飛盤/踢球/吹泡泡", 
-                    detail: "邊吃著棉花糖，進行聖誕交換禮物，帶領孩子們玩螢光棒。",
-                    imageUrl: ""
-                },
+
                 { 
                     time: "18:00-20:00", 
                     title: "豪華晚餐", 
