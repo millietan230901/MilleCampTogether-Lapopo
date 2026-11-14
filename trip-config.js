@@ -94,7 +94,7 @@ window.TRIP_CONFIG = {
                     time: "12:50–13:20", 
                     title: "全聯福利中心 基隆暖暖店", 
                     detail: "入營前的採買站（停留約30分鐘），補給飲料、泡麵、啤酒與零食 YA!",
-                    mapUrl: "https://maps.app.goo.gl/nJ2uNSQvrZNqGJpr8?g_st=ic",
+                    mapUrl: "https://maps.app.goo.gl/gMzEfPtWThh4VQhUA?g_st=ic",
                     imageUrl: ""
                 },
                 { 
