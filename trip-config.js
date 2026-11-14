@@ -86,9 +86,9 @@ window.TRIP_CONFIG = {
                         { name: "天一香肉焿順", mapUrl: "https://www.google.com/maps/search/?api=1&query=%E5%A4%A9%E4%B8%80%E9%A6%99%E8%82%89%E7%84%84%E9%A0%86" },
                         { name: "多利創意漢堡", mapUrl: "https://www.google.com/maps/search/?api=1&query=%E5%A4%9A%E5%88%A9%E5%89%B5%E6%84%8F%E6%BC%A2%E5%A0%A1" }
                     ],
-                    detail: "前往暖暖在地人氣麵食館享用午餐。如人多無位，則買至車上享用",
+                    detail: "前往暖暖在地人氣小吃享用午餐。如人多無位，則買至車上享用",
                     mapUrl: "https://maps.app.goo.gl/3Nu4rxcTB4eSmczT7?g_st=ic",
-                    imageUrl: "image/day1_2.jpg"
+                    imageUrl: "image/IMG_6461.jpeg"
                 },
                 { 
                     time: "12:50–13:20", 
